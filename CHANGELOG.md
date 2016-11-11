@@ -12,6 +12,7 @@
 * :warning: iD now uses `npm` scripts for all build processes
   * iD requires Node v4 or higher, but does not require `make` anymore
   * Update install instructions and prerequisites (#3466, thanks @tyrasd)
+* :warning: iD url hash map order has changed to `zoom/latitude/longitude` to match OSM and others (#3554)
 * Many preset improvements:
   * Add Construction and Tower Type fields to Mast and Tower presets (#3561, thanks @bkil)
   * Add Turning Loop (Island) preset, adjust icons for traversable/nontraversable features (#3557)
@@ -66,6 +67,7 @@
   * Allow `Del` key as a without modifier as a Delete shortcut (#3455)
   * Remove diacritics (accented chars) when doing fuzzy searches (#3159)
 * Bugfixes:
+  * Prevent imagery offset nudging buttons from getting stuck if user clicks again (#3576)
   * Don't include terms for non-searchable presets in translation source (#3323)
   * Let user know if the documentation points to a redirect page (#3337)
   * Fix line labeling placement for IE11, Edge (#3020)
