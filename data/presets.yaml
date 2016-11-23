@@ -386,6 +386,9 @@ en:
       fee:
         # fee=*
         label: Fee
+      fence_type:
+        # fence_type=*
+        label: Type
       fire_hydrant/type:
         # 'fire_hydrant:type=*'
         label: Type
@@ -498,6 +501,9 @@ en:
       internet_access/fee:
         # 'internet_access:fee=*'
         label: Internet Access Fee
+      internet_access/ssid:
+        # 'internet_access:ssid=*'
+        label: SSID (Network Name)
       kerb:
         # kerb=*
         label: Curb Ramp
@@ -592,6 +598,11 @@ en:
       map_type:
         # map_type=*
         label: Type
+      maxheight:
+        # maxheight=*
+        label: Max Height
+        # maxheight field placeholder
+        placeholder: '4, 4.5, 5, 14''0", 14''6", 15''0"'
       maxspeed:
         # maxspeed=*
         label: Speed Limit
@@ -742,6 +753,9 @@ en:
       operator:
         # operator=*
         label: Operator
+      outdoor_seating:
+        # outdoor_seating=*
+        label: Outdoor Seating
       par:
         # par=*
         label: Par
@@ -1153,6 +1167,9 @@ en:
           house: Up to 5m (16ft)
           # visibility=street
           street: 5 to 20m (16 to 65ft)
+      wall:
+        # wall=*
+        label: Type
       water:
         # water=*
         label: Type
@@ -1467,6 +1484,7 @@ en:
       amenity/hunting_stand:
         # amenity=hunting_stand
         name: Hunting Stand
+        # 'terms: game,lookout,shoot,wild,watch'
         terms: '<translate with synonyms or related terms for ''Hunting Stand'', separated by commas>'
       amenity/ice_cream:
         # amenity=ice_cream
@@ -1571,7 +1589,7 @@ en:
       amenity/pub:
         # amenity=pub
         name: Pub
-        # 'terms: dive,beer,bier,booze'
+        # 'terms: alcohol,drink,dive,beer,bier,booze'
         terms: '<translate with synonyms or related terms for ''Pub'', separated by commas>'
       amenity/public_bookcase:
         # amenity=public_bookcase
@@ -2451,6 +2469,11 @@ en:
         name: Unmaintained Track Road
         # 'terms: woods road,forest road,logging road,fire road,farm road,agricultural road,ranch road,carriage road,primitive,unmaintained,rut,offroad,4wd,4x4,four wheel drive,atv,quad,jeep,double track,two track'
         terms: '<translate with synonyms or related terms for ''Unmaintained Track Road'', separated by commas>'
+      highway/traffic_mirror:
+        # highway=traffic_mirror
+        name: Traffic Mirror
+        # 'terms: blind spot,convex,corner,curved,roadside,round,safety,sphere,visibility'
+        terms: '<translate with synonyms or related terms for ''Traffic Mirror'', separated by commas>'
       highway/traffic_signals:
         # highway=traffic_signals
         name: Traffic Signals
@@ -2642,6 +2665,11 @@ en:
         name: Common
         # 'terms: open space'
         terms: '<translate with synonyms or related terms for ''Common'', separated by commas>'
+      leisure/dance:
+        # leisure=dance
+        name: Dance Hall
+        # 'terms: ballroom,jive,swing,tango,waltz'
+        terms: '<translate with synonyms or related terms for ''Dance Hall'', separated by commas>'
       leisure/dog_park:
         # leisure=dog_park
         name: Dog Park
@@ -2755,6 +2783,10 @@ en:
         name: Playground
         # 'terms: jungle gym,play area'
         terms: '<translate with synonyms or related terms for ''Playground'', separated by commas>'
+      leisure/resort:
+        # leisure=resort
+        name: Resort
+        terms: '<translate with synonyms or related terms for ''Resort'', separated by commas>'
       leisure/running_track:
         # 'leisure=track, sport=running'
         name: Running Track
@@ -2880,7 +2912,7 @@ en:
       man_made/surveillance:
         # man_made=surveillance
         name: Surveillance
-        # 'terms: cctv'
+        # 'terms: anpr,alpr,camera,car plate recognition,cctv,guard,license plate recognition,monitoring,number plate recognition,security,video,webcam'
         terms: '<translate with synonyms or related terms for ''Surveillance'', separated by commas>'
       man_made/survey_point:
         # man_made=survey_point
@@ -3846,6 +3878,11 @@ en:
         # tourism=apartment
         name: Guest Apartment / Condo
         terms: '<translate with synonyms or related terms for ''Guest Apartment / Condo'', separated by commas>'
+      tourism/aquarium:
+        # tourism=aquarium
+        name: Aquarium
+        # 'terms: fish,sea,water'
+        terms: '<translate with synonyms or related terms for ''Aquarium'', separated by commas>'
       tourism/artwork:
         # tourism=artwork
         name: Artwork
@@ -3932,6 +3969,7 @@ en:
       tourism/zoo:
         # tourism=zoo
         name: Zoo
+        # 'terms: animal'
         terms: '<translate with synonyms or related terms for ''Zoo'', separated by commas>'
       traffic_calming:
         # traffic_calming=*

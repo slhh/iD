@@ -1180,6 +1180,10 @@
         },
         {
             "key": "highway",
+            "value": "traffic_mirror"
+        },
+        {
+            "key": "highway",
             "value": "traffic_signals"
         },
         {
@@ -1357,6 +1361,10 @@
         },
         {
             "key": "leisure",
+            "value": "dance"
+        },
+        {
+            "key": "leisure",
             "value": "dog_park"
         },
         {
@@ -1454,6 +1462,10 @@
         {
             "key": "leisure",
             "value": "playground"
+        },
+        {
+            "key": "leisure",
+            "value": "resort"
         },
         {
             "key": "sport",
@@ -2432,6 +2444,10 @@
         {
             "key": "tourism",
             "value": "apartment"
+        },
+        {
+            "key": "tourism",
+            "value": "aquarium"
         },
         {
             "key": "tourism",
