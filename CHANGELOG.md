@@ -1,7 +1,15 @@
 :warning: = Breaking change, may affect downstream projects or sites that embed iD.
 
+## 2.0.1
+##### Nov 17, 2016
+* Bugfixes:
+  * When starting iD with an object selected, the map should focus on that object (#3588, thanks @tyrasd)
+  * Fix for "Best" imagery not being automatically selected (#3586)
+* Performance improvements:
+  * Adjust max Mapillary pages fetched per zoom, adjust min viewfield zoom
+
 ## 2.0.0
-##### (coming soon)
+##### Nov 15, 2016
 * :warning: iD is now written in a modular code style using ES6 `import`/`export` and [rollup.js](http://rollupjs.org/) as a build tool (#3118, #3179, #3180)
   * Many thanks to @tmcw, @kepta, @tyrasd, @beaugunderson, @davidchouse
 * :warning: Flattened namespace means that all functions have changed names (#3479)
@@ -16,6 +24,8 @@
   * iD requires Node v4 or higher, but does not require `make` anymore
   * Update install instructions and prerequisites (#3466, thanks @tyrasd)
 * :warning: iD url hash map order has changed to `zoom/latitude/longitude` to match OSM and others (#3554)
+* :warning: Authentication methods like `context.preauth`, `connection.switch`, `iD.uiSourceSwitch.keys` options have changed
+  * `url` option has been renamed to `urlroot`
 * Many preset improvements:
   * Add Construction and Tower Type fields to Mast and Tower presets (#3561, thanks @bkil)
   * Add Turning Loop (Island) preset, adjust icons for traversable/nontraversable features (#3557)

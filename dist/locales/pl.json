@@ -294,6 +294,7 @@
         "inspector": {
             "no_documentation_combination": "Nie ma dokumentacji dla tej kombinacji znaczników",
             "no_documentation_key": "Nie ma dokumentacji dla tego klucza",
+            "documentation_redirect": "Ta dokumentacja została przeniesiona na nową stronę",
             "show_more": "Wyświetl więcej",
             "view_on_osm": "Wyświetl na openstreetmap.org",
             "all_fields": "Wszystkie pola",
@@ -334,7 +335,6 @@
             "switch": "Wróć do tego podkładu",
             "custom": "Własne",
             "custom_button": "Edycja własnego podkładu",
-            "custom_prompt": "Wprowadź szablon URL dla kafelków. Dozwolone elementy to {z}, {x}, {y} dla schematu Z/X/Y oraz {u} dla schematu quadtile.",
             "fix_misalignment": "Przesunięcie podkładu",
             "imagery_source_faq": "Skąd pochodzi ta warstwa?",
             "reset": "Przywraca ustawienia",
@@ -781,6 +781,9 @@
                 "barrier": {
                     "label": "Typ"
                 },
+                "beauty": {
+                    "label": "Typ sklepu"
+                },
                 "bench": {
                     "label": "Ławka"
                 },
@@ -798,6 +801,9 @@
                         "stemcells": "komórki macierzyste",
                         "whole": "krew"
                     }
+                },
+                "board_type": {
+                    "label": "Typ"
                 },
                 "boundary": {
                     "label": "Typ"
@@ -1020,6 +1026,9 @@
                 "handrail": {
                     "label": "Poręcz"
                 },
+                "height": {
+                    "label": "Wysokość (m)"
+                },
                 "highway": {
                     "label": "Typ"
                 },
@@ -1137,6 +1146,12 @@
                     "label": "Lokalizacja"
                 },
                 "man_made": {
+                    "label": "Typ"
+                },
+                "map_size": {
+                    "label": "Zasięg mapy"
+                },
+                "map_type": {
                     "label": "Typ"
                 },
                 "maxspeed": {
@@ -1315,8 +1330,10 @@
                     "options": {
                         "downhill": "Downhill",
                         "hike": "Turystyka piesza",
+                        "ice_skate": "Łyżwiarstwo",
                         "nordic": "Kombinacja norweska",
                         "playground": "Nauka jazdy na nartach",
+                        "skitour": "Skitour",
                         "sled": "Tor saneczkowy",
                         "sleigh": "Sanie",
                         "snow_park": "Snowpark"
@@ -1339,6 +1356,13 @@
                 },
                 "recycling_accepts": {
                     "label": "Przyjmuje"
+                },
+                "recycling_type": {
+                    "label": "Rodzaj recyklingu",
+                    "options": {
+                        "centre": "Miejsce recyklingu",
+                        "container": "Kontener"
+                    }
                 },
                 "ref": {
                     "label": "Numer referencyjny"
@@ -1365,7 +1389,10 @@
                     "label": "Typ"
                 },
                 "sac_scale": {
-                    "label": "Stopień trudności turystyki pieszej"
+                    "label": "Stopień trudności turystyki pieszej",
+                    "options": {
+                        "hiking": "T1: Wędrówki"
+                    }
                 },
                 "sanitary_dump_station": {
                     "label": "Miejsce opróżniania toalety"
@@ -1385,21 +1412,8 @@
                 "service": {
                     "label": "Typ"
                 },
-                "service/bicycle/chain_tool": {
-                    "label": "Skuwacz łańcucha",
-                    "options": {
-                        "no": "Nie",
-                        "undefined": "Domyślnie nie",
-                        "yes": "Tak"
-                    }
-                },
-                "service/bicycle/pump": {
-                    "label": "Pompowanie",
-                    "options": {
-                        "no": "Nie",
-                        "undefined": "Domyślnie nie",
-                        "yes": "Tak"
-                    }
+                "service/bicycle": {
+                    "label": "Usługi"
                 },
                 "service_rail": {
                     "label": "Typ Usługi",
@@ -1524,8 +1538,12 @@
                 "tourism": {
                     "label": "Typ"
                 },
-                "towertype": {
-                    "label": "Typ wieży"
+                "tower/construction": {
+                    "label": "Typ konstrukcji",
+                    "placeholder": "Odciągowa, krata stalowa, ukryta"
+                },
+                "tower/type": {
+                    "label": "Typ"
                 },
                 "tracktype": {
                     "label": "Spoistość drogi, zazwyczaj leśnej lub polnej (tracktype)",
@@ -1537,6 +1555,9 @@
                         "grade5": "Ziemia/piasek/trawa, bez dodatku materiałów utwardzonych; często słabo widoczna"
                     },
                     "placeholder": "Utwardzona, nieubita..."
+                },
+                "traffic_calming": {
+                    "label": "Typ"
                 },
                 "traffic_signals": {
                     "label": "Typ"
@@ -1600,6 +1621,10 @@
                 "address": {
                     "name": "Adres",
                     "terms": "namiar, numer"
+                },
+                "advertising/billboard": {
+                    "name": "Billboard",
+                    "terms": "Reklama"
                 },
                 "aerialway": {
                     "name": "Wyciąg narciarski"
@@ -1850,6 +1875,10 @@
                     "name": "Lodziarnia",
                     "terms": "sklep z lodami"
                 },
+                "amenity/internet_cafe": {
+                    "name": "Kafejka Internetowa",
+                    "terms": "Internet"
+                },
                 "amenity/kindergarten": {
                     "name": "Teren przedszkola",
                     "terms": "Teren żłobka"
@@ -1941,6 +1970,10 @@
                 "amenity/recycling": {
                     "name": "Recykling",
                     "terms": "Recykling, Recyklizacja"
+                },
+                "amenity/recycling_centre": {
+                    "name": "Centrum przetwarzania odpadów (recycling)",
+                    "terms": "centrum przetwarzania odpadów, centrum recyclingu"
                 },
                 "amenity/register_office": {
                     "name": "Urząd stanu cywilnego"
@@ -2059,6 +2092,10 @@
                 "amenity/waste_disposal": {
                     "name": "Śmietnik",
                     "terms": "śmietnik"
+                },
+                "amenity/waste_transfer_station": {
+                    "name": "Stacja Przeróbki Odpadów",
+                    "terms": "odpady"
                 },
                 "amenity/water_point": {
                     "name": "Woda pitna dla kamperów",
@@ -2884,6 +2921,10 @@
                     "name": "Miejsce na ognisko",
                     "terms": "ognisko"
                 },
+                "leisure/fitness_centre": {
+                    "name": "Fitness",
+                    "terms": "fitness, centrum fitness"
+                },
                 "leisure/fitness_centre/yoga": {
                     "name": "Szkoła Yogi",
                     "terms": "yoga, szkoła yogi, centrum yogi, praktyka yogi"
@@ -2978,6 +3019,10 @@
                 "leisure/slipway": {
                     "name": "Pochylnia okrętowa",
                     "terms": "pochylnia"
+                },
+                "leisure/sports_centre": {
+                    "name": "centrum sportowe",
+                    "terms": "centrum sportowe, ośrodek sportowy, ośrodek sportów"
                 },
                 "leisure/sports_centre/swimming": {
                     "name": "Pływalnia",
@@ -3429,6 +3474,10 @@
                     "name": "Rozebrany tor",
                     "terms": "rozebrany tor"
                 },
+                "railway/crossing": {
+                    "name": "przejście kolejowe (ścieżka)",
+                    "terms": "przejście kolejowe"
+                },
                 "railway/disused": {
                     "name": "Nieużywany tor",
                     "terms": "nieużywany tor"
@@ -3440,6 +3489,10 @@
                 "railway/halt": {
                     "name": "Stacja kolejowa",
                     "terms": "stacja,przystanek,kolej,kolejowa"
+                },
+                "railway/level_crossing": {
+                    "name": "przejazd kolejowy (jezdnia)",
+                    "terms": "przejazd kolejowy"
                 },
                 "railway/monorail": {
                     "name": "Kolej jednoszynowa",
@@ -3523,6 +3576,14 @@
                 "shop/beauty": {
                     "name": "Salon piękności",
                     "terms": "kosmetyczka, wizaż"
+                },
+                "shop/beauty/nails": {
+                    "name": "Manicure/pedicure",
+                    "terms": "manicure, pedicure"
+                },
+                "shop/beauty/tanning": {
+                    "name": "Solarium",
+                    "terms": "solarium"
                 },
                 "shop/bed": {
                     "name": "Sklep z łóżkami/materacami",
@@ -3643,6 +3704,10 @@
                 "shop/dry_cleaning": {
                     "name": "Pralnia chemiczna",
                     "terms": "pralnia chemiczna"
+                },
+                "shop/e-cigarette": {
+                    "name": "Sklep z e-papierosami",
+                    "terms": "e-papierosy"
                 },
                 "shop/electronics": {
                     "name": "Sklep RTV/AGD",
@@ -3950,10 +4015,6 @@
                     "name": "Atrakcja turystyczna",
                     "terms": "atrakcja turystyczna"
                 },
-                "tourism/camp_site": {
-                    "name": "Kemping",
-                    "terms": "Camping"
-                },
                 "tourism/caravan_site": {
                     "name": "Kemping dla kamperów",
                     "terms": "kemping dla samochodów kempingowych"
@@ -3981,6 +4042,14 @@
                 "tourism/information": {
                     "name": "Informacja",
                     "terms": "informacja dla turystów"
+                },
+                "tourism/information/board": {
+                    "name": "Tablica Informacyjna",
+                    "terms": "informacja, obwieszczenia"
+                },
+                "tourism/information/map": {
+                    "name": "Mapa",
+                    "terms": "plan, mapa, "
                 },
                 "tourism/motel": {
                     "name": "Motel",
@@ -4010,9 +4079,21 @@
                     "name": "Próg zwalniający",
                     "terms": "próg zwalniający"
                 },
+                "traffic_calming/cushion": {
+                    "name": "Poduszka",
+                    "terms": "poduszka, wyspowy próg spowalniający"
+                },
+                "traffic_calming/dip": {
+                    "name": "Zagłębienie",
+                    "terms": "Zagłębienie, spadek"
+                },
                 "traffic_calming/hump": {
                     "name": "Wysepka zwalniająca",
                     "terms": "wysepka zwalniająca"
+                },
+                "traffic_calming/island": {
+                    "name": "Wysepka",
+                    "terms": "wysepka"
                 },
                 "traffic_calming/rumble_strip": {
                     "name": "Linia wibracyjna",

@@ -337,7 +337,7 @@
             "switch": "Switch back to this background",
             "custom": "Custom",
             "custom_button": "Edit custom background",
-            "custom_prompt": "Enter a tile URL template. Valid tokens are {z}, {x}, {y} for Z/X/Y scheme and {u} for quadtile scheme.",
+            "custom_prompt": "Enter a tile URL template. Valid tokens are {zoom}, {x}, {y} for Z/X/Y scheme and {u} for quadtile scheme.",
             "fix_misalignment": "Adjust imagery offset",
             "imagery_source_faq": "Where does this imagery come from?",
             "reset": "reset",
@@ -979,6 +979,9 @@
                 "fee": {
                     "label": "Fee"
                 },
+                "fence_type": {
+                    "label": "Type"
+                },
                 "fire_hydrant/type": {
                     "label": "Type",
                     "options": {
@@ -1077,6 +1080,9 @@
                 "internet_access/fee": {
                     "label": "Internet Access Fee"
                 },
+                "internet_access/ssid": {
+                    "label": "SSID (Network Name)"
+                },
                 "kerb": {
                     "label": "Curb Ramp"
                 },
@@ -1156,6 +1162,10 @@
                 },
                 "map_type": {
                     "label": "Type"
+                },
+                "maxheight": {
+                    "label": "Max Height",
+                    "placeholder": "4, 4.5, 5, 14'0\", 14'6\", 15'0\""
                 },
                 "maxspeed": {
                     "label": "Speed Limit",
@@ -1270,6 +1280,9 @@
                 },
                 "operator": {
                     "label": "Operator"
+                },
+                "outdoor_seating": {
+                    "label": "Outdoor Seating"
                 },
                 "par": {
                     "label": "Par",
@@ -1600,6 +1613,9 @@
                         "area": "Over 20m (65ft)"
                     }
                 },
+                "wall": {
+                    "label": "Type"
+                },
                 "water_point": {
                     "label": "Water Point"
                 },
@@ -1913,7 +1929,7 @@
                 },
                 "amenity/hunting_stand": {
                     "name": "Hunting Stand",
-                    "terms": ""
+                    "terms": "game,lookout,shoot,wild,watch"
                 },
                 "amenity/ice_cream": {
                     "name": "Ice Cream Shop",
@@ -2001,7 +2017,7 @@
                 },
                 "amenity/pub": {
                     "name": "Pub",
-                    "terms": "dive,beer,bier,booze"
+                    "terms": "alcohol,drink,dive,beer,bier,booze"
                 },
                 "amenity/public_bookcase": {
                     "name": "Public Bookcase",
@@ -2807,6 +2823,10 @@
                     "name": "Unmaintained Track Road",
                     "terms": "woods road,forest road,logging road,fire road,farm road,agricultural road,ranch road,carriage road,primitive,unmaintained,rut,offroad,4wd,4x4,four wheel drive,atv,quad,jeep,double track,two track"
                 },
+                "highway/traffic_mirror": {
+                    "name": "Traffic Mirror",
+                    "terms": "blind spot,convex,corner,curved,roadside,round,safety,sphere,visibility"
+                },
                 "highway/traffic_signals": {
                     "name": "Traffic Signals",
                     "terms": "light,stoplight,traffic light"
@@ -2987,6 +3007,10 @@
                     "name": "Common",
                     "terms": "open space"
                 },
+                "leisure/dance": {
+                    "name": "Dance Hall",
+                    "terms": "ballroom,jive,swing,tango,waltz"
+                },
                 "leisure/dog_park": {
                     "name": "Dog Park",
                     "terms": ""
@@ -3086,6 +3110,10 @@
                 "leisure/playground": {
                     "name": "Playground",
                     "terms": "jungle gym,play area"
+                },
+                "leisure/resort": {
+                    "name": "Resort",
+                    "terms": ""
                 },
                 "leisure/running_track": {
                     "name": "Running Track",
@@ -3201,7 +3229,7 @@
                 },
                 "man_made/surveillance": {
                     "name": "Surveillance",
-                    "terms": "cctv"
+                    "terms": "anpr,alpr,camera,car plate recognition,cctv,guard,license plate recognition,monitoring,number plate recognition,security,video,webcam"
                 },
                 "man_made/survey_point": {
                     "name": "Survey Point",
@@ -4083,6 +4111,10 @@
                     "name": "Guest Apartment / Condo",
                     "terms": ""
                 },
+                "tourism/aquarium": {
+                    "name": "Aquarium",
+                    "terms": "fish,sea,water"
+                },
                 "tourism/artwork": {
                     "name": "Artwork",
                     "terms": "mural,sculpture,statue"
@@ -4161,7 +4193,7 @@
                 },
                 "tourism/zoo": {
                     "name": "Zoo",
-                    "terms": ""
+                    "terms": "animal"
                 },
                 "traffic_calming": {
                     "name": "Traffic Calming",
