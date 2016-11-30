@@ -1038,6 +1038,27 @@
             },
             "name": "Coworking Space"
         },
+        "amenity/crematorium": {
+            "icon": "cemetery",
+            "fields": [
+                "website",
+                "phone",
+                "opening_hours",
+                "wheelchair"
+            ],
+            "geometry": [
+                "area",
+                "point"
+            ],
+            "tags": {
+                "amenity": "crematorium"
+            },
+            "terms": [
+                "cemetery",
+                "funeral"
+            ],
+            "name": "Crematorium"
+        },
         "amenity/dentist": {
             "icon": "dentist",
             "fields": [
@@ -1190,6 +1211,30 @@
                 "amenity": "fire_station"
             },
             "name": "Fire Station"
+        },
+        "amenity/food_court": {
+            "icon": "restaurant",
+            "fields": [
+                "operator",
+                "address",
+                "building_area",
+                "opening_hours",
+                "smoking",
+                "outdoor_seating"
+            ],
+            "geometry": [
+                "point",
+                "area"
+            ],
+            "terms": [
+                "fast food",
+                "restaurant",
+                "food"
+            ],
+            "tags": {
+                "amenity": "food_court"
+            },
+            "name": "Food Court"
         },
         "amenity/fountain": {
             "geometry": [
@@ -6999,10 +7044,49 @@
             },
             "name": "Storage Tank"
         },
+        "man_made/surveillance_camera": {
+            "icon": "camera",
+            "geometry": [
+                "point"
+            ],
+            "fields": [
+                "surveillance",
+                "surveillance/type",
+                "camera/type",
+                "camera/mount",
+                "camera/direction",
+                "surveillance/zone",
+                "contact/webcam"
+            ],
+            "terms": [
+                "anpr",
+                "alpr",
+                "camera",
+                "car plate recognition",
+                "cctv",
+                "guard",
+                "license plate recognition",
+                "monitoring",
+                "number plate recognition",
+                "security",
+                "video",
+                "webcam"
+            ],
+            "tags": {
+                "man_made": "surveillance",
+                "surveillance:type": "camera"
+            },
+            "name": "Surveillance Camera"
+        },
         "man_made/surveillance": {
             "icon": "camera",
             "geometry": [
                 "point"
+            ],
+            "fields": [
+                "surveillance",
+                "surveillance/type",
+                "surveillance/zone"
             ],
             "terms": [
                 "anpr",

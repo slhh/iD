@@ -237,6 +237,10 @@
         },
         {
             "key": "amenity",
+            "value": "crematorium"
+        },
+        {
+            "key": "amenity",
             "value": "dentist"
         },
         {
@@ -266,6 +270,10 @@
         {
             "key": "amenity",
             "value": "fire_station"
+        },
+        {
+            "key": "amenity",
+            "value": "food_court"
         },
         {
             "key": "amenity",
@@ -1573,6 +1581,10 @@
         {
             "key": "man_made",
             "value": "storage_tank"
+        },
+        {
+            "key": "surveillance:type",
+            "value": "camera"
         },
         {
             "key": "man_made",

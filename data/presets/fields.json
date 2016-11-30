@@ -283,6 +283,29 @@
             "type": "combo",
             "label": "Building"
         },
+        "camera/direction": {
+            "key": "camera:direction",
+            "type": "number",
+            "label": "Direction (Degrees Clockwise)",
+            "placeholder": "45, 90, 180, 270"
+        },
+        "camera/mount": {
+            "key": "camera:mount",
+            "type": "combo",
+            "label": "Camera Mount"
+        },
+        "camera/type": {
+            "key": "camera:type",
+            "type": "combo",
+            "label": "Camera Type",
+            "strings": {
+                "options": {
+                    "fixed": "Fixed",
+                    "panning": "Panning",
+                    "dome": "Dome"
+                }
+            }
+        },
         "capacity": {
             "key": "capacity",
             "type": "number",
@@ -334,6 +357,13 @@
             "key": "construction",
             "type": "combo",
             "label": "Type"
+        },
+        "contact/webcam": {
+            "key": "contact:webcam",
+            "type": "url",
+            "icon": "website",
+            "label": "Webcam URL",
+            "placeholder": "http://example.com/"
         },
         "content": {
             "key": "content",
@@ -1456,6 +1486,28 @@
             "key": "surface",
             "type": "combo",
             "label": "Surface"
+        },
+        "surveillance": {
+            "key": "surveillance",
+            "type": "combo",
+            "label": "Surveillance Kind"
+        },
+        "surveillance/type": {
+            "key": "surveillance:type",
+            "type": "combo",
+            "label": "Surveillance Type",
+            "strings": {
+                "options": {
+                    "camera": "Camera",
+                    "guard": "Guard",
+                    "ALPR": "Automatic License Plate Reader"
+                }
+            }
+        },
+        "surveillance/zone": {
+            "key": "surveillance:zone",
+            "type": "combo",
+            "label": "Surveillance Zone"
         },
         "tactile_paving": {
             "key": "tactile_paving",
