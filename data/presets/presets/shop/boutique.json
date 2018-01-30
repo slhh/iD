@@ -1,10 +1,13 @@
 {
     "icon": "shop",
     "fields": [
+        "name",
+        "clothes",
         "operator",
         "address",
         "building_area",
-        "opening_hours"
+        "opening_hours",
+        "payment_multi"
     ],
     "geometry": [
         "point",

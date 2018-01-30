@@ -1,12 +1,14 @@
 {
     "icon": "bar",
     "fields": [
+        "name",
         "operator",
         "address",
         "building_area",
         "opening_hours",
         "smoking",
-        "outdoor_seating"
+        "outdoor_seating",
+        "brewery"
     ],
     "geometry": [
         "point",

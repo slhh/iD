@@ -92,16 +92,27 @@ export function utilDetect(force) {
     // detect text direction
     var q = utilStringQs(window.location.hash.substring(1));
     var lang = dataLocales[detected.locale];
-    if ((lang && lang.rtl) || q.hasOwnProperty('rtl')) {
+    if ((lang && lang.rtl) || (q.rtl === 'true')) {
         detected.textDirection = 'rtl';
     } else {
         detected.textDirection = 'ltr';
     }
     setTextDirection(detected.textDirection);
 
-    detected.host = window.location && (window.location.origin + window.location.pathname);
+    // detect host
+    var loc = window.top.location;
+    var origin = loc.origin;
+    if (!origin) {  // for unpatched IE11
+        origin = loc.protocol + '//' + loc.hostname + (loc.port ? ':' + loc.port: '');
+    }
+
+    detected.host = origin + loc.pathname;
 
     detected.filedrop = (window.FileReader && 'ondrop' in window);
+
+    detected.download = !(detected.ie || detected.browser.toLowerCase() === 'edge');
+
+    detected.cssfilters = !(detected.ie || detected.browser.toLowerCase() === 'edge');
 
     function nav(x) {
         return navigator.userAgent.indexOf(x) !== -1;

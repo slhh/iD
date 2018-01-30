@@ -1,16 +1,28 @@
-import * as d3 from 'd3';
-import { utilRebind } from '../../modules/util/rebind';
+import {
+    dispatch as d3_dispatch
+} from 'd3-dispatch';
+
+import {
+    event as d3_event,
+    select as d3_select
+} from 'd3-selection';
+
+import {
+    utilRebind,
+    utilTriggerEvent
+} from '../../modules/util';
 
 
 export function d3combobox() {
-    var event = d3.dispatch('accept'),
-        data = [],
-        suggestions = [],
-        minItems = 2,
-        caseSensitive = false;
+    var dispatch = d3_dispatch('accept');
+    var _container = d3_select(document.body);
+    var _data = [];
+    var _suggestions = [];
+    var _minItems = 2;
+    var _caseSensitive = false;
 
-    var fetcher = function(val, cb) {
-        cb(data.filter(function(d) {
+    var _fetcher = function(val, cb) {
+        cb(_data.filter(function(d) {
             return d.value
                 .toString()
                 .toLowerCase()
@@ -19,11 +31,11 @@ export function d3combobox() {
     };
 
     var combobox = function(input, attachTo) {
-        var idx = -1,
-            container = d3.select(document.body)
-                .selectAll('div.combobox')
-                .filter(function(d) { return d === input.node(); }),
-            shown = !container.empty();
+        var idx = -1;
+        var wrapper = _container
+            .selectAll('div.combobox')
+            .filter(function(d) { return d === input.node(); });
+        var shown = !wrapper.empty();
 
         input
             .classed('combobox-input', true)
@@ -33,24 +45,24 @@ export function d3combobox() {
             .on('keyup.typeahead', keyup)
             .on('input.typeahead', change)
             .each(function() {
-                var parent = this.parentNode,
-                    sibling = this.nextSibling;
+                var parent = this.parentNode;
+                var sibling = this.nextSibling;
 
-                var caret = d3.select(parent).selectAll('.combobox-caret')
+                var caret = d3_select(parent).selectAll('.combobox-caret')
                     .filter(function(d) { return d === input.node(); })
                     .data([input.node()]);
 
                 caret = caret.enter()
-                  .insert('div', function() { return sibling; })
+                    .insert('div', function() { return sibling; })
                     .attr('class', 'combobox-caret')
-                  .merge(caret);
+                    .merge(caret);
 
                 caret
                     .on('mousedown', function () {
                         // prevent the form element from blurring. it blurs
                         // on mousedown
-                        d3.event.stopPropagation();
-                        d3.event.preventDefault();
+                        d3_event.stopPropagation();
+                        d3_event.preventDefault();
                         if (!shown) {
                             input.node().focus();
                             fetch('', render);
@@ -70,7 +82,7 @@ export function d3combobox() {
 
         function show() {
             if (!shown) {
-                container = d3.select(document.body)
+                wrapper = _container
                     .insert('div', ':first-child')
                     .datum(input.node())
                     .attr('class', 'combobox')
@@ -79,10 +91,10 @@ export function d3combobox() {
                     .style('left', '0px')
                     .on('mousedown', function () {
                         // prevent moving focus out of the text field
-                        d3.event.preventDefault();
+                        d3_event.preventDefault();
                     });
 
-                d3.select(document.body)
+                d3_select('body')
                     .on('scroll.combobox', render, true);
 
                 shown = true;
@@ -92,9 +104,9 @@ export function d3combobox() {
         function hide() {
             if (shown) {
                 idx = -1;
-                container.remove();
+                wrapper.remove();
 
-                d3.select(document.body)
+                d3_select('body')
                     .on('scroll.combobox', null);
 
                 shown = false;
@@ -102,7 +114,7 @@ export function d3combobox() {
         }
 
         function keydown() {
-           switch (d3.event.keyCode) {
+           switch (d3_event.keyCode) {
                // backspace, delete
                case 8:
                case 46:
@@ -116,39 +128,39 @@ export function d3combobox() {
                    break;
                // tab
                case 9:
-                   container.selectAll('a.selected').each(function (d) {
-                       event.call('accept', this, d);
+                   wrapper.selectAll('a.selected').each(function (d) {
+                       dispatch.call('accept', this, d);
                    });
                    hide();
                    break;
                // return
                case 13:
-                   d3.event.preventDefault();
+                   d3_event.preventDefault();
                    break;
                // up arrow
                case 38:
                    nav(-1);
-                   d3.event.preventDefault();
+                   d3_event.preventDefault();
                    break;
                // down arrow
                case 40:
                    nav(+1);
-                   d3.event.preventDefault();
+                   d3_event.preventDefault();
                    break;
            }
-           d3.event.stopPropagation();
+           d3_event.stopPropagation();
         }
 
         function keyup() {
-            switch (d3.event.keyCode) {
+            switch (d3_event.keyCode) {
                 // escape
                 case 27:
                     hide();
                     break;
                 // return
                 case 13:
-                    container.selectAll('a.selected').each(function (d) {
-                       event.call('accept', this, d);
+                    wrapper.selectAll('a.selected').each(function (d) {
+                       dispatch.call('accept', this, d);
                     });
                     hide();
                     break;
@@ -165,17 +177,17 @@ export function d3combobox() {
         }
 
         function nav(dir) {
-            if (!suggestions.length) return;
-            idx = Math.max(Math.min(idx + dir, suggestions.length - 1), 0);
-            input.property('value', suggestions[idx].value);
+            if (!_suggestions.length) return;
+            idx = Math.max(Math.min(idx + dir, _suggestions.length - 1), 0);
+            input.property('value', _suggestions[idx].value);
             render();
             ensureVisible();
         }
 
         function value() {
-            var value = input.property('value'),
-                start = input.property('selectionStart'),
-                end = input.property('selectionEnd');
+            var value = input.property('value');
+            var start = input.property('selectionStart');
+            var end = input.property('selectionEnd');
 
             if (start && end) {
                 value = value.substring(0, start);
@@ -185,41 +197,54 @@ export function d3combobox() {
         }
 
         function fetch(v, cb) {
-            fetcher.call(input, v, function(_) {
-                suggestions = _;
+            _fetcher.call(input, v, function(_) {
+                _suggestions = _;
                 cb();
             });
         }
 
         function autocomplete() {
-            var v = caseSensitive ? value() : value().toLowerCase();
+            var v = _caseSensitive ? value() : value().toLowerCase();
             idx = -1;
             if (!v) return;
 
-            for (var i = 0; i < suggestions.length; i++) {
-                var suggestion = suggestions[i].value,
-                    compare = caseSensitive ? suggestion : suggestion.toLowerCase();
+            var best = -1;
+            var suggestion, compare;
 
-                if (compare.indexOf(v) === 0) {
-                    idx = i;
-                    input.property('value', suggestion);
-                    input.node().setSelectionRange(v.length, suggestion.length);
-                    return;
+            for (var i = 0; i < _suggestions.length; i++) {
+                suggestion = _suggestions[i].value;
+                compare = _caseSensitive ? suggestion : suggestion.toLowerCase();
+
+                // if search string matches suggestion exactly, pick it..
+                if (compare === v) {
+                    best = i;
+                    break;
+
+                // otherwise lock in the first result that starts with the search string..
+                } else if (best === -1 && compare.indexOf(v) === 0) {
+                    best = i;
                 }
+            }
+
+            if (best !== -1) {
+                idx = best;
+                suggestion = _suggestions[best].value;
+                input.property('value', suggestion);
+                input.node().setSelectionRange(v.length, suggestion.length);
             }
         }
 
         function render() {
-            if (suggestions.length >= minItems && document.activeElement === input.node()) {
+            if (_suggestions.length >= _minItems && document.activeElement === input.node()) {
                 show();
             } else {
                 hide();
                 return;
             }
 
-            var options = container
+            var options = wrapper
                 .selectAll('a.combobox-option')
-                .data(suggestions, function(d) { return d.value; });
+                .data(_suggestions, function(d) { return d.value; });
 
             options.exit()
                 .remove();
@@ -236,10 +261,10 @@ export function d3combobox() {
                 .order();
 
 
-            var node = attachTo ? attachTo.node() : input.node(),
-                rect = node.getBoundingClientRect();
+            var node = attachTo ? attachTo.node() : input.node();
+            var rect = node.getBoundingClientRect();
 
-            container
+            wrapper
                 .style('left', rect.left + 'px')
                 .style('width', rect.width + 'px')
                 .style('top', rect.height + rect.top + 'px');
@@ -251,45 +276,50 @@ export function d3combobox() {
         }
 
         function ensureVisible() {
-            var node = container.selectAll('a.selected').node();
+            var node = wrapper.selectAll('a.selected').node();
             if (node) node.scrollIntoView();
         }
 
         function accept(d) {
             if (!shown) return;
-            input
-                .property('value', d.value)
-                .dispatch('change');
-            event.call('accept', this, d);
+            input.property('value', d.value);
+            utilTriggerEvent(input, 'change');
+            dispatch.call('accept', this, d);
             hide();
         }
     };
 
     combobox.fetcher = function(_) {
-        if (!arguments.length) return fetcher;
-        fetcher = _;
+        if (!arguments.length) return _fetcher;
+        _fetcher = _;
         return combobox;
     };
 
     combobox.data = function(_) {
-        if (!arguments.length) return data;
-        data = _;
+        if (!arguments.length) return _data;
+        _data = _;
         return combobox;
     };
 
     combobox.minItems = function(_) {
-        if (!arguments.length) return minItems;
-        minItems = _;
+        if (!arguments.length) return _minItems;
+        _minItems = _;
         return combobox;
     };
 
     combobox.caseSensitive = function(_) {
-        if (!arguments.length) return caseSensitive;
-        caseSensitive = _;
+        if (!arguments.length) return _caseSensitive;
+        _caseSensitive = _;
         return combobox;
     };
 
-    return utilRebind(combobox, event, 'on');
+    combobox.container = function(_) {
+        if (!arguments.length) return _container;
+        _container = _;
+        return combobox;
+    };
+
+    return utilRebind(combobox, dispatch, 'on');
 }
 
 
@@ -301,11 +331,11 @@ d3combobox.off = function(input) {
         .on('keyup.typeahead', null)
         .on('input.typeahead', null)
         .each(function() {
-            d3.select(this.parentNode).selectAll('.combobox-caret')
+            d3_select(this.parentNode).selectAll('.combobox-caret')
                 .filter(function(d) { return d === input.node(); })
                 .on('mousedown', null);
         });
 
-    d3.select(document.body)
+    d3_select('body')
         .on('scroll.combobox', null);
 };

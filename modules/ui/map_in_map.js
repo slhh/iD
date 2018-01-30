@@ -1,45 +1,56 @@
-import * as d3 from 'd3';
-import { d3keybinding } from '../lib/d3.keybinding.js';
-import { svgDebug, svgGpx } from '../svg/index';
-import { geoRawMercator } from '../geo/index';
-import { rendererTileLayer } from '../renderer/index';
-import { utilSetTransform } from '../util/index';
+import { geoPath as d3_geoPath } from 'd3-geo';
+
+import {
+    event as d3_event,
+    select as d3_select
+} from 'd3-selection';
+
+import {
+    zoom as d3_zoom,
+    zoomIdentity as d3_zoomIdentity
+} from 'd3-zoom';
+
+import { d3keybinding as d3_keybinding } from '../lib/d3.keybinding.js';
+
+import { t } from '../util/locale';
+import {
+    geoRawMercator,
+    geoScaleToZoom,
+    geoVecSubtract,
+    geoVecScale,
+    geoZoomToScale,
+} from '../geo';
+
+import { rendererTileLayer } from '../renderer';
+import { svgDebug, svgGpx } from '../svg';
+import { utilSetTransform } from '../util';
 import { utilGetDimensions } from '../util/dimensions';
 
 
-var TAU = 2 * Math.PI;
-function ztok(z) { return 256 * Math.pow(2, z) / TAU; }
-function ktoz(k) { return Math.log(k * TAU) / Math.LN2 - 8; }
-function vecSub(a, b) { return [ a[0] - b[0], a[1] - b[1] ]; }
-function vecScale(a, b) { return [ a[0] * b, a[1] * b ]; }
-
-
 export function uiMapInMap(context) {
-    var key = '/';
-
 
     function map_in_map(selection) {
-        var backgroundLayer = rendererTileLayer(context),
-            overlayLayers = {},
-            projection = geoRawMercator(),
-            gpxLayer = svgGpx(projection, context).showLabels(false),
-            debugLayer = svgDebug(projection, context),
-            zoom = d3.zoom()
-                .scaleExtent([ztok(0.5), ztok(24)])
-                .on('start', zoomStarted)
-                .on('zoom', zoomed)
-                .on('end', zoomEnded),
-            isTransformed = false,
-            isHidden = true,
-            skipEvents = false,
-            gesture = null,
-            zDiff = 6,    // by default, minimap renders at (main zoom - 6)
-            wrap = d3.select(null),
-            tiles = d3.select(null),
-            viewport = d3.select(null),
-            tStart,  // transform at start of gesture
-            tCurr,   // transform at most recent event
-            timeoutId;
+        var backgroundLayer = rendererTileLayer(context);
+        var overlayLayers = {};
+        var projection = geoRawMercator();
+        var gpxLayer = svgGpx(projection, context).showLabels(false);
+        var debugLayer = svgDebug(projection, context);
+        var zoom = d3_zoom()
+            .scaleExtent([geoZoomToScale(0.5), geoZoomToScale(24)])
+            .on('start', zoomStarted)
+            .on('zoom', zoomed)
+            .on('end', zoomEnded);
+        var isTransformed = false;
+        var isHidden = true;
+        var skipEvents = false;
+        var gesture = null;
+        var zDiff = 6;    // by default, minimap renders at (main zoom - 6)
+        var wrap = d3_select(null);
+        var tiles = d3_select(null);
+        var viewport = d3_select(null);
+        var tStart;    // transform at start of gesture
+        var tCurr;     // transform at most recent event
+        var timeoutId;
 
 
         function zoomStarted() {
@@ -52,11 +63,11 @@ export function uiMapInMap(context) {
         function zoomed() {
             if (skipEvents) return;
 
-            var x = d3.event.transform.x,
-                y = d3.event.transform.y,
-                k = d3.event.transform.k,
-                isZooming = (k !== tStart.k),
-                isPanning = (x !== tStart.x || y !== tStart.y);
+            var x = d3_event.transform.x;
+            var y = d3_event.transform.y;
+            var k = d3_event.transform.k;
+            var isZooming = (k !== tStart.k);
+            var isPanning = (x !== tStart.x || y !== tStart.y);
 
             if (!isZooming && !isPanning) {
                 return;  // no change
@@ -67,12 +78,12 @@ export function uiMapInMap(context) {
                 gesture = isZooming ? 'zoom' : 'pan';
             }
 
-            var tMini = projection.transform(),
-                tX, tY, scale;
+            var tMini = projection.transform();
+            var tX, tY, scale;
 
             if (gesture === 'zoom') {
-                var dMini = utilGetDimensions(wrap),
-                    cMini = vecScale(dMini, 0.5);
+                var dMini = utilGetDimensions(wrap);
+                var cMini = geoVecScale(dMini, 0.5);
                 scale = k / tMini.k;
                 tX = (cMini[0] / scale - cMini[0]) * scale;
                 tY = (cMini[1] / scale - cMini[1]) * scale;
@@ -86,10 +97,10 @@ export function uiMapInMap(context) {
             utilSetTransform(tiles, tX, tY, scale);
             utilSetTransform(viewport, 0, 0, scale);
             isTransformed = true;
-            tCurr = d3.zoomIdentity.translate(x, y).scale(k);
+            tCurr = d3_zoomIdentity.translate(x, y).scale(k);
 
-            var zMain = ktoz(context.projection.scale()),
-                zMini = ktoz(k);
+            var zMain = geoScaleToZoom(context.projection.scale());
+            var zMini = geoScaleToZoom(k);
 
             zDiff = zMain - zMini;
 
@@ -103,29 +114,29 @@ export function uiMapInMap(context) {
 
             updateProjection();
             gesture = null;
-            var dMini = utilGetDimensions(wrap),
-                cMini = vecScale(dMini, 0.5);
+            var dMini = utilGetDimensions(wrap);
+            var cMini = geoVecScale(dMini, 0.5);
             context.map().center(projection.invert(cMini));   // recenter main map..
         }
 
 
         function updateProjection() {
-            var loc = context.map().center(),
-                dMini = utilGetDimensions(wrap),
-                cMini = vecScale(dMini, 0.5),
-                tMain = context.projection.transform(),
-                zMain = ktoz(tMain.k),
-                zMini = Math.max(zMain - zDiff, 0.5),
-                kMini = ztok(zMini);
+            var loc = context.map().center();
+            var dMini = utilGetDimensions(wrap);
+            var cMini = geoVecScale(dMini, 0.5);
+            var tMain = context.projection.transform();
+            var zMain = geoScaleToZoom(tMain.k);
+            var zMini = Math.max(zMain - zDiff, 0.5);
+            var kMini = geoZoomToScale(zMini);
 
             projection
                 .translate([tMain.x, tMain.y])
                 .scale(kMini);
 
-            var point = projection(loc),
-                mouse = (gesture === 'pan') ? vecSub([tCurr.x, tCurr.y], [tStart.x, tStart.y]) : [0, 0],
-                xMini = cMini[0] - point[0] + tMain.x + mouse[0],
-                yMini = cMini[1] - point[1] + tMain.y + mouse[1];
+            var point = projection(loc);
+            var mouse = (gesture === 'pan') ? geoVecSubtract([tCurr.x, tCurr.y], [tStart.x, tStart.y]) : [0, 0];
+            var xMini = cMini[0] - point[0] + tMain.x + mouse[0];
+            var yMini = cMini[1] - point[1] + tMain.y + mouse[1];
 
             projection
                 .translate([xMini, yMini])
@@ -140,7 +151,7 @@ export function uiMapInMap(context) {
             }
 
             zoom
-                .scaleExtent([ztok(0.5), ztok(zMain - 3)]);
+                .scaleExtent([geoZoomToScale(0.5), geoZoomToScale(zMain - 3)]);
 
             skipEvents = true;
             wrap.call(zoom.transform, tCurr);
@@ -154,8 +165,8 @@ export function uiMapInMap(context) {
 
             updateProjection();
 
-            var dMini = utilGetDimensions(wrap),
-                zMini = ktoz(projection.scale());
+            var dMini = utilGetDimensions(wrap);
+            var zMini = geoScaleToZoom(projection.scale());
 
             // setup tile container
             tiles = wrap
@@ -217,7 +228,7 @@ export function uiMapInMap(context) {
             overlays = overlays.enter()
                 .append('div')
                 .merge(overlays)
-                .each(function(layer) { d3.select(this).call(layer); });
+                .each(function(layer) { d3_select(this).call(layer); });
 
 
             var dataLayers = tiles
@@ -237,8 +248,8 @@ export function uiMapInMap(context) {
 
             // redraw viewport bounding box
             if (gesture !== 'pan') {
-                var getPath = d3.geoPath(projection),
-                    bbox = { type: 'Polygon', coordinates: [context.map().extent().polygon()] };
+                var getPath = d3_geoPath(projection);
+                var bbox = { type: 'Polygon', coordinates: [context.map().extent().polygon()] };
 
                 viewport = wrap.selectAll('.map-in-map-viewport')
                     .data([0]);
@@ -269,13 +280,14 @@ export function uiMapInMap(context) {
 
 
         function toggle() {
-            if (d3.event) d3.event.preventDefault();
+            if (d3_event) d3_event.preventDefault();
 
             isHidden = !isHidden;
 
-            var label = d3.select('.minimap-toggle');
-            label.classed('active', !isHidden)
-                .select('input').property('checked', !isHidden);
+            d3_select('.minimap-toggle-item')
+                .classed('active', !isHidden)
+                .select('input')
+                .property('checked', !isHidden);
 
             if (isHidden) {
                 wrap
@@ -324,10 +336,10 @@ export function uiMapInMap(context) {
 
         redraw();
 
-        var keybinding = d3keybinding('map-in-map')
-            .on(key, toggle);
+        var keybinding = d3_keybinding('map-in-map')
+            .on(t('background.minimap.key'), toggle);
 
-        d3.select(document)
+        d3_select(document)
             .call(keybinding);
     }
 

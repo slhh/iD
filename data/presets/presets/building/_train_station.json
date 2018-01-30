@@ -1,6 +1,7 @@
 {
     "icon": "building",
     "fields": [
+        "name",
         "address",
         "levels"
     ],
@@ -14,5 +15,5 @@
     },
     "matchScore": 0.5,
     "name": "Train Station",
-    "searchable":false
+    "searchable": false
 }

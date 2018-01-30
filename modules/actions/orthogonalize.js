@@ -1,6 +1,9 @@
-import _ from 'lodash';
+import _clone from 'lodash-es/clone';
+import _uniq from 'lodash-es/uniq';
+
 import { actionDeleteNode } from './delete_node';
-import { geoEuclideanDistance, geoInterp } from '../geo/index';
+import { geoVecInterp, geoVecLength } from '../geo';
+
 
 /*
  * Based on https://github.com/openstreetmap/potlatch2/blob/master/net/systemeD/potlatch2/tools/Quadrilateralise.as
@@ -17,7 +20,7 @@ export function actionOrthogonalize(wayId, projection) {
 
         var way = graph.entity(wayId),
             nodes = graph.childNodes(way),
-            points = _.uniq(nodes).map(function(n) { return projection(n.loc); }),
+            points = _uniq(nodes).map(function(n) { return projection(n.loc); }),
             corner = {i: 0, dotp: 1},
             epsilon = 1e-4,
             node, loc, score, motions, i, j;
@@ -34,11 +37,11 @@ export function actionOrthogonalize(wayId, projection) {
 
             node = graph.entity(nodes[corner.i].id);
             loc = projection.invert(points[corner.i]);
-            graph = graph.replace(node.move(geoInterp(node.loc, loc, t)));
+            graph = graph.replace(node.move(geoVecInterp(node.loc, loc, t)));
 
         } else {
             var best,
-                originalPoints = _.clone(points);
+                originalPoints = _clone(points);
             score = Infinity;
 
             for (i = 0; i < 1000; i++) {
@@ -48,7 +51,7 @@ export function actionOrthogonalize(wayId, projection) {
                 }
                 var newScore = squareness(points);
                 if (newScore < score) {
-                    best = _.clone(points);
+                    best = _clone(points);
                     score = newScore;
                 }
                 if (score < epsilon) {
@@ -63,7 +66,7 @@ export function actionOrthogonalize(wayId, projection) {
                 if (originalPoints[i][0] !== points[i][0] || originalPoints[i][1] !== points[i][1]) {
                     loc = projection.invert(points[i]);
                     node = graph.entity(nodes[i].id);
-                    graph = graph.replace(node.move(geoInterp(node.loc, loc, t)));
+                    graph = graph.replace(node.move(geoVecInterp(node.loc, loc, t)));
                 }
             }
 
@@ -94,7 +97,7 @@ export function actionOrthogonalize(wayId, projection) {
                 q = subtractPoints(c, b),
                 scale, dotp;
 
-            scale = 2 * Math.min(geoEuclideanDistance(p, [0, 0]), geoEuclideanDistance(q, [0, 0]));
+            scale = 2 * Math.min(geoVecLength(p, [0, 0]), geoVecLength(q, [0, 0]));
             p = normalizePoint(p, 1.0);
             q = normalizePoint(q, 1.0);
 
@@ -176,7 +179,7 @@ export function actionOrthogonalize(wayId, projection) {
     action.disabled = function(graph) {
         var way = graph.entity(wayId),
             nodes = graph.childNodes(way),
-            points = _.uniq(nodes).map(function(n) { return projection(n.loc); });
+            points = _uniq(nodes).map(function(n) { return projection(n.loc); });
 
         if (squareness(points)) {
             return false;

@@ -3,7 +3,8 @@
     "fields": [
         "operator",
         "map_type",
-        "map_size"
+        "map_size",
+        "direction"
     ],
     "geometry": [
         "point",
@@ -12,6 +13,10 @@
     "tags": {
         "tourism": "information",
         "information": "map"
+    },
+    "reference": {
+        "key": "information",
+        "value": "map"
     },
     "name": "Map"
 }

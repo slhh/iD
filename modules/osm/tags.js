@@ -20,10 +20,10 @@ export var osmOneWayTags = {
         'yes': true
     },
     'highway': {
-        'motorway': true,
-        'motorway_link': true
+        'motorway': true
     },
     'junction': {
+        'circular': true,
         'roundabout': true
     },
     'man_made': {
@@ -35,6 +35,9 @@ export var osmOneWayTags = {
         'yes': true
     },
     'waterway': {
+        'canal': true,
+        'ditch': true,
+        'drain': true,
         'river': true,
         'stream': true
     }
@@ -45,7 +48,9 @@ export var osmPavedTags = {
     'surface': {
         'paved': true,
         'asphalt': true,
-        'concrete': true
+        'concrete': true,
+        'concrete:lanes': true,
+        'concrete:plates': true
     },
     'tracktype': {
         'grade1': true

@@ -1,19 +1,24 @@
-import _ from 'lodash';
+import _some from 'lodash-es/some';
+
 import { t } from '../util/locale';
-import { actionDeleteMultiple } from '../actions/index';
-import { behaviorOperation } from '../behavior/index';
-import { geoSphericalDistance } from '../geo/index';
-import { modeBrowse, modeSelect } from '../modes/index';
-import { uiCmd } from '../ui/index';
+import { actionDeleteMultiple } from '../actions';
+import { behaviorOperation } from '../behavior';
+import { geoExtent, geoSphericalDistance } from '../geo';
+import { modeBrowse, modeSelect } from '../modes';
+import { uiCmd } from '../ui';
 
 
 export function operationDelete(selectedIDs, context) {
     var multi = (selectedIDs.length === 1 ? 'single' : 'multiple'),
-        action = actionDeleteMultiple(selectedIDs);
+        action = actionDeleteMultiple(selectedIDs),
+        extent = selectedIDs.reduce(function(extent, id) {
+                return extent.extend(context.entity(id).extent(context.graph()));
+            }, geoExtent());
 
 
     var operation = function() {
         var nextSelectedID;
+        var nextSelectedLoc;
 
         if (selectedIDs.length === 1) {
             var id = selectedIDs[0],
@@ -23,7 +28,7 @@ export function operationDelete(selectedIDs, context) {
                 parent = parents[0];
 
             // Select the next closest node in the way.
-            if (geometry === 'vertex' && parent.nodes.length > 2) {
+            if (geometry === 'vertex') {
                 var nodes = parent.nodes,
                     i = nodes.indexOf(id);
 
@@ -38,13 +43,19 @@ export function operationDelete(selectedIDs, context) {
                 }
 
                 nextSelectedID = nodes[i];
+                nextSelectedLoc = context.entity(nextSelectedID).loc;
             }
         }
 
         context.perform(action, operation.annotation());
 
-        if (nextSelectedID && context.hasEntity(nextSelectedID)) {
-            context.enter(modeSelect(context, [nextSelectedID]).follow(true));
+        if (nextSelectedID && nextSelectedLoc) {
+            if (context.hasEntity(nextSelectedID)) {
+                context.enter(modeSelect(context, [nextSelectedID]).follow(true));
+            } else {
+                context.map().centerEase(nextSelectedLoc);
+                context.enter(modeBrowse(context));
+            }
         } else {
             context.enter(modeBrowse(context));
         }
@@ -59,11 +70,13 @@ export function operationDelete(selectedIDs, context) {
 
     operation.disabled = function() {
         var reason;
-        if (_.some(selectedIDs, context.hasHiddenConnections)) {
+        if (extent.area() && extent.percentContainedIn(context.extent()) < 0.8) {
+            reason = 'too_large';
+        } else if (_some(selectedIDs, context.hasHiddenConnections)) {
             reason = 'connected_to_hidden';
-        } else if (_.some(selectedIDs, protectedMember)) {
+        } else if (_some(selectedIDs, protectedMember)) {
             reason = 'part_of_relation';
-        } else if (_.some(selectedIDs, incompleteRelation)) {
+        } else if (_some(selectedIDs, incompleteRelation)) {
             reason = 'incomplete_relation';
         }
         return reason;

@@ -1,7 +1,32 @@
-import * as d3 from 'd3';
-import _ from 'lodash';
+import _clone from 'lodash-es/clone';
+import _filter from 'lodash-es/filter';
+import _map from 'lodash-es/map';
+import _reduce from 'lodash-es/reduce';
+import _union from 'lodash-es/union';
+import _uniq from 'lodash-es/uniq';
+import _without from 'lodash-es/without';
 
+import {
+    event as d3_event,
+    select as d3_select
+} from 'd3-selection';
+
+import { d3keybinding as d3_keybinding } from '../lib/d3.keybinding.js';
 import { t } from '../util/locale';
+
+import {
+    actionDiscardTags,
+    actionMergeRemoteChanges,
+    actionNoop,
+    actionRevert
+} from '../actions';
+
+import { coreGraph } from '../core';
+
+import {
+    modeBrowse,
+    modeSelect
+} from './index';
 
 import {
     uiConflicts,
@@ -9,48 +34,128 @@ import {
     uiCommit,
     uiLoading,
     uiSuccess
-} from '../ui/index';
-
-import {
-    actionDiscardTags,
-    actionMergeRemoteChanges,
-    actionNoop,
-    actionRevert
-} from '../actions/index';
+} from '../ui';
 
 import {
     utilDisplayName,
     utilDisplayType
-} from '../util/index';
+} from '../util';
 
-import { modeBrowse } from './index';
-import { coreGraph } from '../core/index';
-import { JXON } from '../util/jxon';
+
+var _isSaving = false;
 
 
 export function modeSave(context) {
-    var mode = {
-        id: 'save'
-    };
+    var mode = { id: 'save' };
+    var keybinding = d3_keybinding('modeSave');
 
-    var ui = uiCommit(context)
-            .on('cancel', cancel)
-            .on('save', save);
+    var loading = uiLoading(context)
+        .message(t('save.uploading'))
+        .blocking(true);
+
+    var commit = uiCommit(context)
+        .on('cancel', cancel)
+        .on('save', save);
+
+    var _toCheck = [];
+    var _toLoad = [];
+    var _loaded = {};
+    var _toLoadCount = 0;
+    var _toLoadTotal = 0;
+
+    var _conflicts = [];
+    var _errors = [];
+    var _origChanges;
 
 
-    function cancel() {
-        context.enter(modeBrowse(context));
+    function cancel(selectedID) {
+        if (selectedID) {
+            context.enter(modeSelect(context, [selectedID]));
+        } else {
+            context.enter(modeBrowse(context));
+        }
     }
 
 
-    function save(e, tryAgain) {
+    function save(changeset, tryAgain, checkConflicts) {
+        // Guard against accidentally entering save code twice - #4641
+        if (_isSaving && !tryAgain) {
+            return;
+        }
+
+        var osm = context.connection();
+        if (!osm) {
+            cancel();
+            return;
+        }
+
+        // If user somehow got logged out mid-save, try to reauthenticate..
+        // This can happen if they were logged in from before, but the tokens are no longer valid.
+        if (!osm.authenticated()) {
+            osm.authenticate(function(err) {
+                if (err) {
+                    cancel();   // quit save mode..
+                } else {
+                    save(changeset, tryAgain, checkConflicts);  // continue where we left off..
+                }
+            });
+            return;
+        }
+
+        if (!_isSaving) {
+            keybindingOff();
+            context.container().call(loading);  // block input
+            _isSaving = true;
+        }
+
+        var history = context.history();
+        var localGraph = context.graph();
+        var remoteGraph = coreGraph(history.base(), true);
+
+        _conflicts = [];
+        _errors = [];
+
+        // Store original changes, in case user wants to download them as an .osc file
+        _origChanges = history.changes(actionDiscardTags(history.difference()));
+
+        // First time, `history.perform` a no-op action.
+        // Any conflict resolutions will be done as `history.replace`
+        if (!tryAgain) {
+            history.perform(actionNoop());
+        }
+
+        // Attempt a fast upload.. If there are conflicts, re-enter with `checkConflicts = true`
+        if (!checkConflicts) {
+            upload(changeset);
+
+        // Do the full (slow) conflict check..
+        } else {
+            var modified = _filter(history.difference().summary(), { changeType: 'modified' });
+            _toCheck = _map(_map(modified, 'entity'), 'id');
+            _toLoad = withChildNodes(_toCheck, localGraph);
+            _loaded = {};
+            _toLoadCount = 0;
+            _toLoadTotal = _toLoad.length;
+
+            if (_toCheck.length) {
+                showProgress(_toLoadCount, _toLoadTotal);
+                _toLoad.forEach(function(id) { _loaded[id] = false; });
+                osm.loadMultiple(_toLoad, loaded);
+            } else {
+                upload(changeset);
+            }
+        }
+
+        return;
+
+
         function withChildNodes(ids, graph) {
-            return _.uniq(_.reduce(ids, function(result, id) {
-                var e = graph.entity(id);
-                if (e.type === 'way') {
+            return _uniq(_reduce(ids, function(result, id) {
+                var entity = graph.entity(id);
+                if (entity.type === 'way') {
                     try {
-                        var cn = graph.childNodes(e);
-                        result.push.apply(result, _.map(_.filter(cn, 'version'), 'id'));
+                        var children = graph.childNodes(entity);
+                        result.push.apply(result, _map(_filter(children, 'version'), 'id'));
                     } catch (err) {
                         /* eslint-disable no-console */
                         if (typeof console !== 'undefined') console.error(err);
@@ -58,92 +163,88 @@ export function modeSave(context) {
                     }
                 }
                 return result;
-            }, _.clone(ids)));
-        }
-
-        var loading = uiLoading(context).message(t('save.uploading')).blocking(true),
-            history = context.history(),
-            origChanges = history.changes(actionDiscardTags(history.difference())),
-            localGraph = context.graph(),
-            remoteGraph = coreGraph(history.base(), true),
-            modified = _.filter(history.difference().summary(), {changeType: 'modified'}),
-            toCheck = _.map(_.map(modified, 'entity'), 'id'),
-            toLoad = withChildNodes(toCheck, localGraph),
-            conflicts = [],
-            errors = [];
-
-        if (!tryAgain) history.perform(actionNoop());  // checkpoint
-        context.container().call(loading);
-
-        if (toCheck.length) {
-            context.connection().loadMultiple(toLoad, loaded);
-        } else {
-            finalize();
+            }, _clone(ids)));
         }
 
 
         // Reload modified entities into an alternate graph and check for conflicts..
         function loaded(err, result) {
-            if (errors.length) return;
+            if (_errors.length) return;
 
             if (err) {
-                errors.push({
-                    msg: err.responseText,
+                _errors.push({
+                    msg: err.message || err.responseText,
                     details: [ t('save.status_code', { code: err.status }) ]
                 });
                 showErrors();
 
             } else {
                 var loadMore = [];
-                _.each(result.data, function(entity) {
+
+                result.data.forEach(function(entity) {
                     remoteGraph.replace(entity);
-                    toLoad = _.without(toLoad, entity.id);
+                    _loaded[entity.id] = true;
+                    _toLoad = _without(_toLoad, entity.id);
+
+                    if (!entity.visible) return;
 
                     // Because loadMultiple doesn't download /full like loadEntity,
                     // need to also load children that aren't already being checked..
-                    if (!entity.visible) return;
+                    var i, id;
                     if (entity.type === 'way') {
-                        loadMore.push.apply(loadMore,
-                            _.difference(entity.nodes, toCheck, toLoad, loadMore));
+                        for (i = 0; i < entity.nodes.length; i++) {
+                            id = entity.nodes[i];
+                            if (_loaded[id] === undefined) {
+                                _loaded[id] = false;
+                                loadMore.push(id);
+                            }
+                        }
                     } else if (entity.type === 'relation' && entity.isMultipolygon()) {
-                        loadMore.push.apply(loadMore,
-                            _.difference(_.map(entity.members, 'id'), toCheck, toLoad, loadMore));
+                        for (i = 0; i < entity.members.length; i++) {
+                            id = entity.members[i].id;
+                            if (_loaded[id] === undefined) {
+                                _loaded[id] = false;
+                                loadMore.push(id);
+                            }
+                        }
                     }
                 });
 
+                _toLoadCount += result.data.length;
+                _toLoadTotal += loadMore.length;
+                showProgress(_toLoadCount, _toLoadTotal);
+
                 if (loadMore.length) {
-                    toLoad.push.apply(toLoad, loadMore);
-                    context.connection().loadMultiple(loadMore, loaded);
+                    _toLoad.push.apply(_toLoad, loadMore);
+                    osm.loadMultiple(loadMore, loaded);
                 }
 
-                if (!toLoad.length) {
-                    checkConflicts();
+                if (!_toLoad.length) {
+                    detectConflicts();
                 }
             }
         }
 
 
-        function checkConflicts() {
+        function detectConflicts() {
             function choice(id, text, action) {
                 return { id: id, text: text, action: function() { history.replace(action); } };
             }
             function formatUser(d) {
-                return '<a href="' + context.connection().userURL(d) + '" target="_blank">' + d + '</a>';
+                return '<a href="' + osm.userURL(d) + '" target="_blank">' + d + '</a>';
             }
             function entityName(entity) {
                 return utilDisplayName(entity) || (utilDisplayType(entity.id) + ' ' + entity.id);
             }
 
-            function compareVersions(local, remote) {
+            function sameVersions(local, remote) {
                 if (local.version !== remote.version) return false;
 
                 if (local.type === 'way') {
-                    var children = _.union(local.nodes, remote.nodes);
-
+                    var children = _union(local.nodes, remote.nodes);
                     for (var i = 0; i < children.length; i++) {
-                        var a = localGraph.hasEntity(children[i]),
-                            b = remoteGraph.hasEntity(children[i]);
-
+                        var a = localGraph.hasEntity(children[i]);
+                        var b = remoteGraph.hasEntity(children[i]);
                         if (a && b && a.version !== b.version) return false;
                     }
                 }
@@ -151,26 +252,26 @@ export function modeSave(context) {
                 return true;
             }
 
-            _.each(toCheck, function(id) {
-                var local = localGraph.entity(id),
-                    remote = remoteGraph.entity(id);
+            _toCheck.forEach(function(id) {
+                var local = localGraph.entity(id);
+                var remote = remoteGraph.entity(id);
 
-                if (compareVersions(local, remote)) return;
+                if (sameVersions(local, remote)) return;
 
-                var action = actionMergeRemoteChanges,
-                    merge = action(id, localGraph, remoteGraph, formatUser);
+                var action = actionMergeRemoteChanges;
+                var merge = action(id, localGraph, remoteGraph, formatUser);
 
                 history.replace(merge);
 
                 var mergeConflicts = merge.conflicts();
                 if (!mergeConflicts.length) return;  // merged safely
 
-                var forceLocal = action(id, localGraph, remoteGraph).withOption('force_local'),
-                    forceRemote = action(id, localGraph, remoteGraph).withOption('force_remote'),
-                    keepMine = t('save.conflict.' + (remote.visible ? 'keep_local' : 'restore')),
-                    keepTheirs = t('save.conflict.' + (remote.visible ? 'keep_remote' : 'delete'));
+                var forceLocal = action(id, localGraph, remoteGraph).withOption('force_local');
+                var forceRemote = action(id, localGraph, remoteGraph).withOption('force_remote');
+                var keepMine = t('save.conflict.' + (remote.visible ? 'keep_local' : 'restore'));
+                var keepTheirs = t('save.conflict.' + (remote.visible ? 'keep_remote' : 'delete'));
 
-                conflicts.push({
+                _conflicts.push({
                     id: id,
                     name: entityName(local),
                     details: mergeConflicts,
@@ -182,186 +283,229 @@ export function modeSave(context) {
                 });
             });
 
-            finalize();
+            upload(changeset);
         }
-
-
-        function finalize() {
-            if (conflicts.length) {
-                conflicts.sort(function(a,b) { return b.id.localeCompare(a.id); });
-                showConflicts();
-            } else if (errors.length) {
-                showErrors();
-            } else {
-                var changes = history.changes(actionDiscardTags(history.difference()));
-                if (changes.modified.length || changes.created.length || changes.deleted.length) {
-                    context.connection().putChangeset(
-                        changes,
-                        context.version,
-                        e.comment,
-                        history.imageryUsed(),
-                        function(err, changeset_id) {
-                            if (err) {
-                                errors.push({
-                                    msg: err.responseText,
-                                    details: [ t('save.status_code', { code: err.status }) ]
-                                });
-                                showErrors();
-                            } else {
-                                history.clearSaved();
-                                success(e, changeset_id);
-                                // Add delay to allow for postgres replication #1646 #2678
-                                window.setTimeout(function() {
-                                    d3.select('.inspector-wrap *').remove();
-                                    loading.close();
-                                    context.flush();
-                                }, 2500);
-                            }
-                        });
-                } else {        // changes were insignificant or reverted by user
-                    d3.select('.inspector-wrap *').remove();
-                    loading.close();
-                    context.flush();
-                    cancel();
-                }
-            }
-        }
-
-
-        function showConflicts() {
-            var selection = context.container()
-                .select('#sidebar')
-                .append('div')
-                .attr('class','sidebar-component');
-
-            loading.close();
-
-            selection.call(uiConflicts(context)
-                .list(conflicts)
-                .on('download', function() {
-                    var data = JXON.stringify(context.connection().osmChangeJXON('CHANGEME', origChanges)),
-                        win = window.open('data:text/xml,' + encodeURIComponent(data), '_blank');
-                    win.focus();
-                })
-                .on('cancel', function() {
-                    history.pop();
-                    selection.remove();
-                })
-                .on('save', function() {
-                    for (var i = 0; i < conflicts.length; i++) {
-                        if (conflicts[i].chosen === 1) {  // user chose "keep theirs"
-                            var entity = context.hasEntity(conflicts[i].id);
-                            if (entity && entity.type === 'way') {
-                                var children = _.uniq(entity.nodes);
-                                for (var j = 0; j < children.length; j++) {
-                                    history.replace(actionRevert(children[j]));
-                                }
-                            }
-                            history.replace(actionRevert(conflicts[i].id));
-                        }
-                    }
-
-                    selection.remove();
-                    save(e, true);
-                })
-            );
-        }
-
-
-        function showErrors() {
-            var selection = uiConfirm(context.container());
-
-            history.pop();
-            loading.close();
-
-            selection
-                .select('.modal-section.header')
-                .append('h3')
-                .text(t('save.error'));
-
-            addErrors(selection, errors);
-            selection.okButton();
-        }
-
-
-        function addErrors(selection, data) {
-            var message = selection
-                .select('.modal-section.message-text');
-
-            var items = message
-                .selectAll('.error-container')
-                .data(data);
-
-            var enter = items.enter()
-                .append('div')
-                .attr('class', 'error-container');
-
-            enter
-                .append('a')
-                .attr('class', 'error-description')
-                .attr('href', '#')
-                .classed('hide-toggle', true)
-                .text(function(d) { return d.msg || t('save.unknown_error_details'); })
-                .on('click', function() {
-                    var error = d3.select(this),
-                        detail = d3.select(this.nextElementSibling),
-                        exp = error.classed('expanded');
-
-                    detail.style('display', exp ? 'none' : 'block');
-                    error.classed('expanded', !exp);
-
-                    d3.event.preventDefault();
-                });
-
-            var details = enter
-                .append('div')
-                .attr('class', 'error-detail-container')
-                .style('display', 'none');
-
-            details
-                .append('ul')
-                .attr('class', 'error-detail-list')
-                .selectAll('li')
-                .data(function(d) { return d.details || []; })
-                .enter()
-                .append('li')
-                .attr('class', 'error-detail-item')
-                .text(function(d) { return d; });
-
-            items.exit()
-                .remove();
-        }
-
     }
 
 
-    function success(e, changeset_id) {
-        context.enter(modeBrowse(context)
-            .sidebar(uiSuccess(context)
-                .changeset({
-                    id: changeset_id,
-                    comment: e.comment
-                })
-                .on('cancel', function() {
-                    context.ui().sidebar.hide();
-                })
-            )
-        );
+    function upload(changeset) {
+        var osm = context.connection();
+        if (!osm) {
+            _errors.push({ msg: 'No OSM Service' });
+        }
+
+        if (_conflicts.length) {
+            _conflicts.sort(function(a, b) { return b.id.localeCompare(a.id); });
+            showConflicts(changeset);
+
+        } else if (_errors.length) {
+            showErrors();
+
+        } else {
+            var history = context.history();
+            var changes = history.changes(actionDiscardTags(history.difference()));
+            if (changes.modified.length || changes.created.length || changes.deleted.length) {
+                osm.putChangeset(changeset, changes, uploadCallback);
+            } else {        // changes were insignificant or reverted by user
+                d3_select('.inspector-wrap *').remove();
+                loading.close();
+                _isSaving = false;
+                context.flush();
+                cancel();
+            }
+        }
+    }
+
+
+    function uploadCallback(err, changeset) {
+        if (err) {
+            if (err.status === 409) {          // 409 Conflict
+                save(changeset, true, true);   // tryAgain = true, checkConflicts = true
+            } else {
+                _errors.push({
+                    msg: err.message || err.responseText,
+                    details: [ t('save.status_code', { code: err.status }) ]
+                });
+                showErrors();
+            }
+
+        } else {
+            context.history().clearSaved();
+            success(changeset);
+            // Add delay to allow for postgres replication #1646 #2678
+            window.setTimeout(function() {
+                d3_select('.inspector-wrap *').remove();
+                loading.close();
+                _isSaving = false;
+                context.flush();
+            }, 2500);
+        }
+    }
+
+
+    function showProgress(num, total) {
+        var modal = context.container().select('.loading-modal .modal-section');
+        var progress = modal.selectAll('.progress')
+            .data([0]);
+
+        // enter/update
+        progress.enter()
+            .append('div')
+            .attr('class', 'progress')
+            .merge(progress)
+            .text(t('save.conflict_progress', { num: num, total: total }));
+    }
+
+
+    function showConflicts(changeset) {
+        var history = context.history();
+        var selection = context.container()
+            .select('#sidebar')
+            .append('div')
+            .attr('class','sidebar-component');
+
+        loading.close();
+        _isSaving = false;
+
+        var ui = uiConflicts(context)
+            .conflictList(_conflicts)
+            .origChanges(_origChanges)
+            .on('cancel', function() {
+                history.pop();
+                selection.remove();
+                keybindingOn();
+            })
+            .on('save', function() {
+                for (var i = 0; i < _conflicts.length; i++) {
+                    if (_conflicts[i].chosen === 1) {  // user chose "keep theirs"
+                        var entity = context.hasEntity(_conflicts[i].id);
+                        if (entity && entity.type === 'way') {
+                            var children = _uniq(entity.nodes);
+                            for (var j = 0; j < children.length; j++) {
+                                history.replace(actionRevert(children[j]));
+                            }
+                        }
+                        history.replace(actionRevert(_conflicts[i].id));
+                    }
+                }
+
+                selection.remove();
+                save(changeset, true, false);  // tryAgain = true, checkConflicts = false
+            });
+
+        selection.call(ui);
+    }
+
+
+    function showErrors() {
+        keybindingOn();
+        context.history().pop();
+        loading.close();
+        _isSaving = false;
+
+        var selection = uiConfirm(context.container());
+        selection
+            .select('.modal-section.header')
+            .append('h3')
+            .text(t('save.error'));
+
+        addErrors(selection, _errors);
+        selection.okButton();
+    }
+
+
+    function addErrors(selection, data) {
+        var message = selection
+            .select('.modal-section.message-text');
+
+        var items = message
+            .selectAll('.error-container')
+            .data(data);
+
+        var enter = items.enter()
+            .append('div')
+            .attr('class', 'error-container');
+
+        enter
+            .append('a')
+            .attr('class', 'error-description')
+            .attr('href', '#')
+            .classed('hide-toggle', true)
+            .text(function(d) { return d.msg || t('save.unknown_error_details'); })
+            .on('click', function() {
+                d3_event.preventDefault();
+
+                var error = d3_select(this);
+                var detail = d3_select(this.nextElementSibling);
+                var exp = error.classed('expanded');
+
+                detail.style('display', exp ? 'none' : 'block');
+                error.classed('expanded', !exp);
+            });
+
+        var details = enter
+            .append('div')
+            .attr('class', 'error-detail-container')
+            .style('display', 'none');
+
+        details
+            .append('ul')
+            .attr('class', 'error-detail-list')
+            .selectAll('li')
+            .data(function(d) { return d.details || []; })
+            .enter()
+            .append('li')
+            .attr('class', 'error-detail-item')
+            .text(function(d) { return d; });
+
+        items.exit()
+            .remove();
+    }
+
+
+    function success(changeset) {
+        commit.reset();
+
+        var ui = uiSuccess(context)
+            .changeset(changeset)
+            .on('cancel', function() { context.ui().sidebar.hide(); });
+
+        context.enter(modeBrowse(context).sidebar(ui));
+    }
+
+
+    function keybindingOn() {
+        d3_select(document)
+            .call(keybinding.on('⎋', cancel, true));
+    }
+
+
+    function keybindingOff() {
+        d3_select(document)
+            .call(keybinding.off);
     }
 
 
     mode.enter = function() {
         function done() {
-            context.ui().sidebar.show(ui);
+            context.ui().sidebar.show(commit);
         }
+
+        keybindingOn();
 
         context.container().selectAll('#content')
             .attr('class', 'inactive');
 
-        if (context.connection().authenticated()) {
+        var osm = context.connection();
+        if (!osm) {
+            cancel();
+            return;
+        }
+
+        if (osm.authenticated()) {
             done();
         } else {
-            context.connection().authenticate(function(err) {
+            osm.authenticate(function(err) {
                 if (err) {
                     cancel();
                 } else {
@@ -373,6 +517,10 @@ export function modeSave(context) {
 
 
     mode.exit = function() {
+        _isSaving = false;
+
+        keybindingOff();
+
         context.container().selectAll('#content')
             .attr('class', 'active');
 

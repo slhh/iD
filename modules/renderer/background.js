@@ -1,39 +1,104 @@
-import * as d3 from 'd3';
-import _ from 'lodash';
-import { data } from '../../data/index';
-import { geoExtent, geoMetersToOffset, geoOffsetToMeters} from '../geo/index';
+import _find from 'lodash-es/find';
+
+import { dispatch as d3_dispatch } from 'd3-dispatch';
+import { interpolateNumber as d3_interpolateNumber } from 'd3-interpolate';
+import { select as d3_select } from 'd3-selection';
+
+import { data } from '../../data';
+import { geoExtent, geoMetersToOffset, geoOffsetToMeters} from '../geo';
 import { rendererBackgroundSource } from './background_source';
 import { rendererTileLayer } from './tile_layer';
-import { utilQsString, utilStringQs } from '../util/index';
+import { utilQsString, utilStringQs } from '../util';
+import { utilDetect } from '../util/detect';
 import { utilRebind } from '../util/rebind';
 
 
 export function rendererBackground(context) {
-    var dispatch = d3.dispatch('change'),
-        baseLayer = rendererTileLayer(context).projection(context.projection),
-        overlayLayers = [],
-        backgroundSources;
-
-
-    function findSource(id) {
-        return _.find(backgroundSources, function(d) {
-            return d.id && d.id === id;
-        });
-    }
+    var dispatch = d3_dispatch('change');
+    var detected = utilDetect();
+    var baseLayer = rendererTileLayer(context).projection(context.projection);
+    var _overlayLayers = [];
+    var _backgroundSources = [];
+    var _brightness = 1;
+    var _contrast = 1;
+    var _saturation = 1;
+    var _sharpness = 1;
 
 
     function background(selection) {
+
+        var baseFilter = '';
+        if (detected.cssfilters) {
+            if (_brightness !== 1) {
+                baseFilter += 'brightness(' + _brightness + ')';
+            }
+            if (_contrast !== 1) {
+                baseFilter += 'contrast(' + _contrast + ')';
+            }
+            if (_saturation !== 1) {
+                baseFilter += 'saturate(' + _saturation + ')';
+            }
+            if (_sharpness < 1) {  // gaussian blur
+                var blur = d3_interpolateNumber(0.5, 5)(1 - _sharpness);
+                baseFilter += 'blur(' + blur + 'px)';
+            }
+        }
+
         var base = selection.selectAll('.layer-background')
             .data([0]);
 
-        base.enter()
+        base = base.enter()
             .insert('div', '.layer-data')
             .attr('class', 'layer layer-background')
-            .merge(base)
+            .merge(base);
+
+        if (detected.cssfilters) {
+            base.style('filter', baseFilter || null);
+        } else {
+            base.style('opacity', _brightness);
+        }
+
+
+        var imagery = base.selectAll('.layer-imagery')
+            .data([0]);
+
+        imagery.enter()
+            .append('div')
+            .attr('class', 'layer layer-imagery')
+            .merge(imagery)
             .call(baseLayer);
 
+
+        var maskFilter = '';
+        var mixBlendMode = '';
+        if (detected.cssfilters && _sharpness > 1) {  // apply unsharp mask
+            mixBlendMode = 'overlay';
+            maskFilter = 'saturate(0) blur(3px) invert(1)';
+
+            var contrast = _sharpness - 1;
+            maskFilter += ' contrast(' + contrast + ')';
+
+            var brightness = d3_interpolateNumber(1, 0.85)(_sharpness - 1);
+            maskFilter += ' brightness(' + brightness + ')';
+        }
+
+        var mask = base.selectAll('.layer-unsharp-mask')
+            .data(detected.cssfilters && _sharpness > 1 ? [0] : []);
+
+        mask.exit()
+            .remove();
+
+        mask.enter()
+            .append('div')
+            .attr('class', 'layer layer-mask layer-unsharp-mask')
+            .merge(mask)
+            .call(baseLayer)
+            .style('filter', maskFilter || null)
+            .style('mix-blend-mode', mixBlendMode || null);
+
+
         var overlays = selection.selectAll('.layer-overlay')
-            .data(overlayLayers, function(d) { return d.source().name(); });
+            .data(_overlayLayers, function(d) { return d.source().name(); });
 
         overlays.exit()
             .remove();
@@ -42,14 +107,16 @@ export function rendererBackground(context) {
             .insert('div', '.layer-data')
             .attr('class', 'layer layer-overlay')
             .merge(overlays)
-            .each(function(layer) { d3.select(this).call(layer); });
+            .each(function(layer) { d3_select(this).call(layer); });
     }
 
 
     background.updateImagery = function() {
+        if (context.inIntro()) return;
+
         var b = background.baseLayerSource(),
-            o = overlayLayers
-                .filter(function (d) { return !d.source().isLocatorOverlay(); })
+            o = _overlayLayers
+                .filter(function (d) { return !d.source().isLocatorOverlay() && !d.source().isHidden(); })
                 .map(function (d) { return d.source().id; })
                 .join(','),
             meters = geoOffsetToMeters(b.offset()),
@@ -60,7 +127,7 @@ export function rendererBackground(context) {
 
         var id = b.id;
         if (id === 'custom') {
-            id = 'custom:' + b.template;
+            id = 'custom:' + b.template();
         }
 
         if (id) {
@@ -81,17 +148,22 @@ export function rendererBackground(context) {
             delete q.offset;
         }
 
-        window.location.replace('#' + utilQsString(q, true));
+        if (!window.mocha) {
+            window.location.replace('#' + utilQsString(q, true));
+        }
 
         var imageryUsed = [b.imageryUsed()];
 
-        overlayLayers
-            .filter(function (d) { return !d.source().isLocatorOverlay(); })
+        _overlayLayers
+            .filter(function (d) { return !d.source().isLocatorOverlay() && !d.source().isHidden(); })
             .forEach(function (d) { imageryUsed.push(d.source().imageryUsed()); });
 
         var gpx = context.layers().layer('gpx');
         if (gpx && gpx.enabled() && gpx.hasGpx()) {
-            imageryUsed.push('Local GPX');
+            // Include a string like '.gpx data file' or '.geojson data file'
+            var match = gpx.getSrc().match(/(kml|gpx|(?:geo)?json)$/i);
+            var extension = match ? ('.' + match[0].toLowerCase() + ' ') : '';
+            imageryUsed.push(extension + 'data file');
         }
 
         var mapillary_images = context.layers().layer('mapillary-images');
@@ -104,12 +176,17 @@ export function rendererBackground(context) {
             imageryUsed.push('Mapillary Signs');
         }
 
+        var openstreetcam_images = context.layers().layer('openstreetcam-images');
+        if (openstreetcam_images && openstreetcam_images.enabled()) {
+            imageryUsed.push('OpenStreetCam Images');
+        }
+
         context.history().imageryUsed(imageryUsed);
     };
 
 
     background.sources = function(extent) {
-        return backgroundSources.filter(function(source) {
+        return _backgroundSources.filter(function(source) {
             return source.intersects(extent);
         });
     };
@@ -119,7 +196,7 @@ export function rendererBackground(context) {
         if (!_) return;
         baseLayer.dimensions(_);
 
-        overlayLayers.forEach(function(layer) {
+        _overlayLayers.forEach(function(layer) {
             layer.dimensions(_);
         });
     };
@@ -129,16 +206,20 @@ export function rendererBackground(context) {
         if (!arguments.length) return baseLayer.source();
 
         // test source against OSM imagery blacklists..
+        var osm = context.connection();
+        if (!osm) return background;
+
         var blacklists = context.connection().imageryBlacklists();
 
-        var fail = false,
+        var template = d.template(),
+            fail = false,
             tested = 0,
             regex, i;
 
         for (i = 0; i < blacklists.length; i++) {
             try {
                 regex = new RegExp(blacklists[i]);
-                fail = regex.test(d.template);
+                fail = regex.test(template);
                 tested++;
                 if (fail) break;
             } catch (e) {
@@ -149,39 +230,46 @@ export function rendererBackground(context) {
         // ensure at least one test was run.
         if (!tested) {
             regex = new RegExp('.*\.google(apis)?\..*/(vt|kh)[\?/].*([xyz]=.*){3}.*');
-            fail = regex.test(d.template);
+            fail = regex.test(template);
         }
 
-        baseLayer.source(!fail ? d : rendererBackgroundSource.None());
+        baseLayer.source(!fail ? d : background.findSource('none'));
         dispatch.call('change');
         background.updateImagery();
         return background;
     };
 
 
+    background.findSource = function(id) {
+        return _find(_backgroundSources, function(d) {
+            return d.id && d.id === id;
+        });
+    };
+
+
     background.bing = function() {
-        background.baseLayerSource(findSource('Bing'));
+        background.baseLayerSource(background.findSource('Bing'));
     };
 
 
     background.showsLayer = function(d) {
         return d.id === baseLayer.source().id ||
-            overlayLayers.some(function(layer) { return d.id === layer.source().id; });
+            _overlayLayers.some(function(layer) { return d.id === layer.source().id; });
     };
 
 
     background.overlayLayerSources = function() {
-        return overlayLayers.map(function (l) { return l.source(); });
+        return _overlayLayers.map(function (l) { return l.source(); });
     };
 
 
     background.toggleOverlayLayer = function(d) {
         var layer;
 
-        for (var i = 0; i < overlayLayers.length; i++) {
-            layer = overlayLayers[i];
+        for (var i = 0; i < _overlayLayers.length; i++) {
+            layer = _overlayLayers[i];
             if (layer.source() === d) {
-                overlayLayers.splice(i, 1);
+                _overlayLayers.splice(i, 1);
                 dispatch.call('change');
                 background.updateImagery();
                 return;
@@ -191,9 +279,10 @@ export function rendererBackground(context) {
         layer = rendererTileLayer(context)
             .source(d)
             .projection(context.projection)
-            .dimensions(baseLayer.dimensions());
+            .dimensions(baseLayer.dimensions()
+        );
 
-        overlayLayers.push(layer);
+        _overlayLayers.push(layer);
         dispatch.call('change');
         background.updateImagery();
     };
@@ -216,6 +305,38 @@ export function rendererBackground(context) {
     };
 
 
+    background.brightness = function(d) {
+        if (!arguments.length) return _brightness;
+        _brightness = d;
+        if (context.mode()) dispatch.call('change');
+        return background;
+    };
+
+
+    background.contrast = function(d) {
+        if (!arguments.length) return _contrast;
+        _contrast = d;
+        if (context.mode()) dispatch.call('change');
+        return background;
+    };
+
+
+    background.saturation = function(d) {
+        if (!arguments.length) return _saturation;
+        _saturation = d;
+        if (context.mode()) dispatch.call('change');
+        return background;
+    };
+
+
+    background.sharpness = function(d) {
+        if (!arguments.length) return _sharpness;
+        _sharpness = d;
+        if (context.mode()) dispatch.call('change');
+        return background;
+    };
+
+
     background.init = function() {
         function parseMap(qmap) {
             if (!qmap) return false;
@@ -226,31 +347,53 @@ export function rendererBackground(context) {
 
         var dataImagery = data.imagery || [],
             q = utilStringQs(window.location.hash.substring(1)),
-            chosen = q.background || q.layer,
+            requested = q.background || q.layer,
             extent = parseMap(q.map),
+            first,
             best;
 
-        backgroundSources = dataImagery.map(function(source) {
+        // Add all the available imagery sources
+        _backgroundSources = dataImagery.map(function(source) {
             if (source.type === 'bing') {
                 return rendererBackgroundSource.Bing(source, dispatch);
+            } else if (source.id === 'EsriWorldImagery') {
+                return rendererBackgroundSource.Esri(source);
             } else {
                 return rendererBackgroundSource(source);
             }
         });
 
-        backgroundSources.unshift(rendererBackgroundSource.None());
+        first = _backgroundSources.length && _backgroundSources[0];
 
-        if (!chosen && extent) {
-            best = _.find(this.sources(extent), function(s) { return s.best(); });
+        // Add 'None'
+        _backgroundSources.unshift(rendererBackgroundSource.None());
+
+        // Add 'Custom'
+        var template = context.storage('background-custom-template') || '';
+        var custom = rendererBackgroundSource.Custom(template);
+        _backgroundSources.unshift(custom);
+
+
+        // Decide which background layer to display
+        if (!requested && extent) {
+            best = _find(this.sources(extent), function(s) { return s.best(); });
         }
-
-        if (chosen && chosen.indexOf('custom:') === 0) {
-            background.baseLayerSource(rendererBackgroundSource.Custom(chosen.replace(/^custom:/, '')));
+        if (requested && requested.indexOf('custom:') === 0) {
+            template = requested.replace(/^custom:/, '');
+            background.baseLayerSource(custom.template(template));
+            context.storage('background-custom-template', template);
         } else {
-            background.baseLayerSource(findSource(chosen) || best || findSource('Bing') || backgroundSources[1] || backgroundSources[0]);
+            background.baseLayerSource(
+                background.findSource(requested) ||
+                best ||
+                background.findSource(context.storage('background-last-used')) ||
+                background.findSource('Bing') ||
+                first ||
+                background.findSource('none')
+            );
         }
 
-        var locator = _.find(backgroundSources, function(d) {
+        var locator = _find(_backgroundSources, function(d) {
             return d.overlay && d.default;
         });
 
@@ -260,7 +403,7 @@ export function rendererBackground(context) {
 
         var overlays = (q.overlays || '').split(',');
         overlays.forEach(function(overlay) {
-            overlay = findSource(overlay);
+            overlay = background.findSource(overlay);
             if (overlay) {
                 background.toggleOverlayLayer(overlay);
             }

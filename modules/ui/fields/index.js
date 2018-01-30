@@ -22,6 +22,7 @@ import {
     uiFieldCombo,
     uiFieldMultiCombo,
     uiFieldNetworkCombo,
+    uiFieldSemiCombo,
     uiFieldTypeCombo
 } from './combo';
 
@@ -33,13 +34,17 @@ import {
     uiFieldUrl
 } from './input';
 
+import {
+    uiFieldRadio,
+    uiFieldStructureRadio
+} from './radio';
+
 import { uiFieldAccess } from './access';
 import { uiFieldAddress } from './address';
 import { uiFieldCycleway } from './cycleway';
 import { uiFieldLanes } from './lanes';
 import { uiFieldLocalized } from './localized';
 import { uiFieldMaxspeed } from './maxspeed';
-import { uiFieldRadio } from './radio';
 import { uiFieldRestrictions } from './restrictions';
 import { uiFieldTextarea } from './textarea';
 import { uiFieldWikipedia } from './wikipedia';
@@ -61,6 +66,8 @@ export var uiFields = {
     onewayCheck: uiFieldOnewayCheck,
     radio: uiFieldRadio,
     restrictions: uiFieldRestrictions,
+    semiCombo: uiFieldSemiCombo,
+    structureRadio: uiFieldStructureRadio,
     tel: uiFieldTel,
     text: uiFieldText,
     textarea: uiFieldTextarea,

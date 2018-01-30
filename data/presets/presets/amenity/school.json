@@ -1,8 +1,11 @@
 {
     "icon": "school",
     "fields": [
+        "name",
         "operator",
-        "address"
+        "address",
+        "religion",
+        "denomination"
     ],
     "geometry": [
         "point",

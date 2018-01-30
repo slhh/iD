@@ -1,52 +1,75 @@
-import * as d3 from 'd3';
-import _ from 'lodash';
-import { geoEuclideanDistance } from '../geo';
-import { modeBrowse, modeSelect } from '../modes';
+import _without from 'lodash-es/without';
+
+import {
+    event as d3_event,
+    mouse as d3_mouse,
+    select as d3_select
+} from 'd3-selection';
+
+import { geoVecLength } from '../geo';
+
+import {
+    modeBrowse,
+    modeSelect
+} from '../modes';
+
 import { osmEntity } from '../osm';
 
 
 export function behaviorSelect(context) {
-    var suppressMenu = true,
-        tolerance = 4,
-        p1 = null;
+    var lastMouse = null;
+    var suppressMenu = true;
+    var tolerance = 4;
+    var p1 = null;
+
+
+    function point() {
+        return d3_mouse(context.container().node());
+    }
 
 
     function keydown() {
-        if (d3.event && d3.event.shiftKey) {
+        var e = d3_event;
+        if (e && e.shiftKey) {
             context.surface()
                 .classed('behavior-multiselect', true);
+        }
+
+        if (e && e.keyCode === 93) {  // context menu
+            e.preventDefault();
+            e.stopPropagation();
         }
     }
 
 
     function keyup() {
-        if (!d3.event || !d3.event.shiftKey) {
+        var e = d3_event;
+        if (!e || !e.shiftKey) {
             context.surface()
                 .classed('behavior-multiselect', false);
         }
-    }
 
 
-    function point() {
-        return d3.mouse(context.container().node());
-    }
-
-
-    function contextmenu() {
-        if (!p1) p1 = point();
-        d3.event.preventDefault();
-        suppressMenu = false;
-        click();
+        if (e && e.keyCode === 93) {  // context menu
+            e.preventDefault();
+            e.stopPropagation();
+            contextmenu();
+        }
     }
 
 
     function mousedown() {
         if (!p1) p1 = point();
-        d3.select(window)
+        d3_select(window)
             .on('mouseup.select', mouseup, true);
 
         var isShowAlways = +context.storage('edit-menu-show-always') === 1;
         suppressMenu = !isShowAlways;
+    }
+
+
+    function mousemove() {
+        if (d3_event) lastMouse = d3_event;
     }
 
 
@@ -55,29 +78,51 @@ export function behaviorSelect(context) {
     }
 
 
+    function contextmenu() {
+        var e = d3_event;
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!+e.clientX && !+e.clientY) {
+            if (lastMouse) {
+                e.sourceEvent = lastMouse;
+            } else {
+                return;
+            }
+        }
+
+        if (!p1) p1 = point();
+        suppressMenu = false;
+        click();
+    }
+
+
     function click() {
-        d3.select(window)
+        d3_select(window)
             .on('mouseup.select', null, true);
 
         if (!p1) return;
-        var p2 = point(),
-            dist = geoEuclideanDistance(p1, p2);
+        var p2 = point();
+        var dist = geoVecLength(p1, p2);
 
         p1 = null;
         if (dist > tolerance) {
             return;
         }
 
-        var isMultiselect = d3.event.shiftKey || d3.select('#surface .lasso').node(),
-            isShowAlways = +context.storage('edit-menu-show-always') === 1,
-            datum = d3.event.target.__data__,
-            mode = context.mode();
+        var isMultiselect = d3_event.shiftKey || d3_select('#surface .lasso').node();
+        var isShowAlways = +context.storage('edit-menu-show-always') === 1;
+        var datum = d3_event.target.__data__ || (lastMouse && lastMouse.target.__data__);
+        var mode = context.mode();
 
+        var entity = datum && datum.properties && datum.properties.entity;
+        if (entity) datum = entity;
 
-        if (datum.type === 'midpoint') {
-            // clicked midpoint, do nothing..
+        if (datum && datum.type === 'midpoint') {
+            datum = datum.parents[0];
+        }
 
-        } else if (!(datum instanceof osmEntity)) {
+        if (!(datum instanceof osmEntity)) {
             // clicked nothing..
             if (!isMultiselect && mode.id !== 'browse') {
                 context.enter(modeBrowse(context));
@@ -104,7 +149,7 @@ export function behaviorSelect(context) {
                         mode.suppressMenu(false).reselect();
                     } else {
                         // deselect clicked entity, then reenter select mode or return to browse mode..
-                        selectedIDs = _.without(selectedIDs, datum.id);
+                        selectedIDs = _without(selectedIDs, datum.id);
                         context.enter(selectedIDs.length ? modeSelect(context, selectedIDs) : modeBrowse(context));
                     }
                 } else {
@@ -121,29 +166,50 @@ export function behaviorSelect(context) {
 
 
     var behavior = function(selection) {
-        d3.select(window)
+        lastMouse = null;
+        suppressMenu = true;
+        p1 = null;
+
+        d3_select(window)
             .on('keydown.select', keydown)
-            .on('keyup.select', keyup);
+            .on('keyup.select', keyup)
+            .on('contextmenu.select-window', function() {
+                // Edge and IE really like to show the contextmenu on the
+                // menubar when user presses a keyboard menu button
+                // even after we've already preventdefaulted the key event.
+                var e = d3_event;
+                if (+e.clientX === 0 && +e.clientY === 0) {
+                    d3_event.preventDefault();
+                    d3_event.stopPropagation();
+                }
+            });
 
         selection
             .on('mousedown.select', mousedown)
+            .on('mousemove.select', mousemove)
             .on('contextmenu.select', contextmenu);
 
-        keydown();
+        if (d3_event && d3_event.shiftKey) {
+            context.surface()
+                .classed('behavior-multiselect', true);
+        }
     };
 
 
     behavior.off = function(selection) {
-        d3.select(window)
+        d3_select(window)
             .on('keydown.select', null)
             .on('keyup.select', null)
+            .on('contextmenu.select-window', null)
             .on('mouseup.select', null, true);
 
         selection
             .on('mousedown.select', null)
+            .on('mousemove.select', null)
             .on('contextmenu.select', null);
 
-        keyup();
+        context.surface()
+            .classed('behavior-multiselect', false);
     };
 
 

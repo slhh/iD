@@ -1,11 +1,13 @@
 {
     "icon": "bicycle",
     "fields": [
+        "name",
         "operator",
         "address",
         "building_area",
+        "service/bicycle",
         "opening_hours",
-        "service/bicycle"
+        "payment_multi"
     ],
     "geometry": [
         "point",

@@ -1,8 +1,10 @@
 {
     "icon": "cemetery",
     "fields": [
+        "name",
         "tomb",
-        "building_area"
+        "building_area",
+        "inscription"
     ],
     "geometry": [
         "point",

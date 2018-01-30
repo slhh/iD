@@ -1,4 +1,8 @@
-import _ from 'lodash';
+import _bind from 'lodash-es/bind';
+import _forEach from 'lodash-es/forEach';
+import _reject from 'lodash-es/reject';
+import _uniq from 'lodash-es/uniq';
+
 import { data } from '../../data/index';
 import { presetCategory } from './category';
 import { presetCollection } from './collection';
@@ -15,14 +19,14 @@ export function presetIndex() {
     // a presetCollection with methods for
     // loading new data and returning defaults
 
-    var all = presetCollection([]),
-        defaults = { area: all, line: all, point: all, vertex: all, relation: all },
-        fields = {},
-        universal = [],
-        recent = presetCollection([]);
+    var all = presetCollection([]);
+    var _defaults = { area: all, line: all, point: all, vertex: all, relation: all };
+    var _fields = {};
+    var _universal = [];
+    var _recent = presetCollection([]);
 
     // Index of presets by (geometry, tag key).
-    var index = {
+    var _index = {
         point: {},
         vertex: {},
         line: {},
@@ -32,17 +36,24 @@ export function presetIndex() {
 
     all.match = function(entity, resolver) {
         var geometry = entity.geometry(resolver);
+        var address;
 
-        // Treat entities on addr:interpolation lines as points, not vertices (#3241)
+        // Treat entities on addr:interpolation lines as points, not vertices - #3241
         if (geometry === 'vertex' && entity.isOnAddressLine(resolver)) {
             geometry = 'point';
         }
 
-        var geometryMatches = index[geometry],
-            best = -1,
-            match;
+        var geometryMatches = _index[geometry];
+        var best = -1;
+        var match;
 
         for (var k in entity.tags) {
+            // If any part of an address is present,
+            // allow fallback to "Address" preset - #4353
+            if (k.match(/^addr:/) !== null && geometryMatches['addr:*']) {
+                address = geometryMatches['addr:*'][0];
+            }
+
             var keyMatches = geometryMatches[k];
             if (!keyMatches) continue;
 
@@ -53,6 +64,10 @@ export function presetIndex() {
                     match = keyMatches[i];
                 }
             }
+        }
+
+        if (address && (!match || match.isFallback())) {
+            match = address;
         }
 
         return match || all.item(geometry);
@@ -71,9 +86,9 @@ export function presetIndex() {
     // (see `Way#isArea()`). In other words, the keys of L form the whitelist,
     // and the subkeys form the blacklist.
     all.areaKeys = function() {
-        var areaKeys = {},
-            ignore = ['barrier', 'highway', 'footway', 'railway', 'type'],
-            presets = _.reject(all.collection, 'suggestion');
+        var areaKeys = {};
+        var ignore = ['barrier', 'highway', 'footway', 'railway', 'type'];  // probably a line..
+        var presets = _reject(all.collection, 'suggestion');
 
         // whitelist
         presets.forEach(function(d) {
@@ -81,7 +96,7 @@ export function presetIndex() {
             if (!key) return;
             if (ignore.indexOf(key) !== -1) return;
 
-            if (d.geometry.indexOf('area') !== -1) {
+            if (d.geometry.indexOf('area') !== -1) {    // probably an area..
                 areaKeys[key] = areaKeys[key] || {};
             }
         });
@@ -93,9 +108,9 @@ export function presetIndex() {
             if (ignore.indexOf(key) !== -1) return;
 
             var value = d.tags[key];
-            if (d.geometry.indexOf('area') === -1 &&
-                d.geometry.indexOf('line') !== -1 &&
-                key in areaKeys && value !== '*') {
+            if (key in areaKeys &&                      // probably an area...
+                d.geometry.indexOf('line') !== -1 &&    // but sometimes a line
+                value !== '*') {
                 areaKeys[key][value] = true;
             }
         });
@@ -107,28 +122,36 @@ export function presetIndex() {
     all.init = function() {
         var d = data.presets;
 
+        all.collection = [];
+        _recent.collection = [];
+        _fields = {};
+        _universal = [];
+        _index = { point: {}, vertex: {}, line: {}, area: {}, relation: {} };
+
         if (d.fields) {
-            _.forEach(d.fields, function(d, id) {
-                fields[id] = presetField(id, d);
-                if (d.universal) universal.push(fields[id]);
+            _forEach(d.fields, function(d, id) {
+                _fields[id] = presetField(id, d);
+                if (d.universal) {
+                    _universal.push(_fields[id]);
+                }
             });
         }
 
         if (d.presets) {
-            _.forEach(d.presets, function(d, id) {
-                all.collection.push(presetPreset(id, d, fields));
+            _forEach(d.presets, function(d, id) {
+                all.collection.push(presetPreset(id, d, _fields));
             });
         }
 
         if (d.categories) {
-            _.forEach(d.categories, function(d, id) {
+            _forEach(d.categories, function(d, id) {
                 all.collection.push(presetCategory(id, d, all));
             });
         }
 
         if (d.defaults) {
-            var getItem = _.bind(all.item, all);
-            defaults = {
+            var getItem = _bind(all.item, all);
+            _defaults = {
                 area: presetCollection(d.defaults.area.map(getItem)),
                 line: presetCollection(d.defaults.line.map(getItem)),
                 point: presetCollection(d.defaults.point.map(getItem)),
@@ -138,11 +161,11 @@ export function presetIndex() {
         }
 
         for (var i = 0; i < all.collection.length; i++) {
-            var preset = all.collection[i],
-                geometry = preset.geometry;
+            var preset = all.collection[i];
+            var geometry = preset.geometry;
 
             for (var j = 0; j < geometry.length; j++) {
-                var g = index[geometry[j]];
+                var g = _index[geometry[j]];
                 for (var k in preset.tags) {
                     (g[k] = g[k] || []).push(preset);
                 }
@@ -153,23 +176,21 @@ export function presetIndex() {
     };
 
     all.field = function(id) {
-        return fields[id];
+        return _fields[id];
     };
 
     all.universal = function() {
-        return universal;
+        return _universal;
     };
 
     all.defaults = function(geometry, n) {
-        var rec = recent.matchGeometry(geometry).collection.slice(0, 4),
-            def = _.uniq(rec.concat(defaults[geometry].collection)).slice(0, n - 1);
-        return presetCollection(_.uniq(rec.concat(def).concat(all.item(geometry))));
+        var rec = _recent.matchGeometry(geometry).collection.slice(0, 4);
+        var def = _uniq(rec.concat(_defaults[geometry].collection)).slice(0, n - 1);
+        return presetCollection(_uniq(rec.concat(def).concat(all.item(geometry))));
     };
 
     all.choose = function(preset) {
-        if (!preset.isFallback()) {
-            recent = presetCollection(_.uniq([preset].concat(recent.collection)));
-        }
+        _recent = presetCollection(_uniq([preset].concat(_recent.collection)));
         return all;
     };
 

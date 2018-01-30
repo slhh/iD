@@ -1,3 +1,5 @@
+import * as d3 from 'd3';  // TODO: remove (needed for tests?)
+
 export * from './actions/index';
 export * from './behavior/index';
 export * from './core/index';
@@ -12,6 +14,7 @@ export * from './services/index';
 export * from './svg/index';
 export * from './ui/fields/index';
 export * from './ui/intro/index';
+export * from './ui/panels/index';
 export * from './ui/index';
 export * from './util/index';
 export * from './lib/index';
@@ -26,6 +29,10 @@ export { coreDifference as Difference } from './core/difference';
 export { coreGraph as Graph } from './core/graph';
 export { coreHistory as History } from './core/history';
 export { coreTree as Tree } from './core/tree';
+export { geoVecCross as geoCross } from './geo/vector';
+export { geoVecInterp as geoInterp } from './geo/vector';
+export { geoVecFloor as geoRoundCoordinates } from './geo/vector';
+export { geoVecLength as geoEuclideanDistance } from './geo/vector';
 export { osmEntity as Entity } from './osm/entity';
 export { osmNode as Node } from './osm/node';
 export { osmRelation as Relation } from './osm/relation';
@@ -36,10 +43,10 @@ export { rendererFeatures as Features } from './renderer/features';
 export { rendererMap as Map } from './renderer/map';
 export { rendererTileLayer as TileLayer } from './renderer/tile_layer';
 export { utilDetect as Detect } from './util/detect';
+export { uiPresetEditor as uiPreset } from './ui/preset_editor';
 
 export var debug = false;
 
-import * as d3 from 'd3';
 import * as lib from './lib/index';
 
-export { d3, lib };
+export { lib, d3 };

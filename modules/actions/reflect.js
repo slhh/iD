@@ -1,13 +1,13 @@
 import {
-    polygonHull as d3polygonHull,
-    polygonCentroid as d3polygonCentroid
-} from 'd3';
+    polygonHull as d3_polygonHull,
+    polygonCentroid as d3_polygonCentroid
+} from 'd3-polygon';
 
 import {
-    geoEuclideanDistance,
     geoExtent,
-    geoInterp,
-    geoRotate
+    geoRotate,
+    geoVecInterp,
+    geoVecLength
 } from '../geo';
 
 import { utilGetAllNodes } from '../util';
@@ -22,15 +22,15 @@ export function actionReflect(reflectIds, projection) {
     // http://gis.stackexchange.com/questions/3739/generalisation-strategies-for-building-outlines/3756#3756
     function getSmallestSurroundingRectangle(graph, nodes) {
         var points = nodes.map(function(n) { return projection(n.loc); }),
-            hull = d3polygonHull(points),
-            centroid = d3polygonCentroid(hull),
+            hull = d3_polygonHull(points),
+            centroid = d3_polygonCentroid(hull),
             minArea = Infinity,
             ssrExtent = [],
             ssrAngle = 0,
             c1 = hull[0];
 
-        for (var i = 0; i < hull.length - 1; i++) {
-            var c2 = hull[i + 1],
+        for (var i = 0; i <= hull.length - 1; i++) {
+            var c2 = (i === hull.length - 1) ? hull[0] : hull[i + 1],
                 angle = Math.atan2(c2[1] - c1[1], c2[0] - c1[0]),
                 poly = geoRotate(hull, -angle, centroid),
                 extent = poly.reduce(function(extent, point) {
@@ -69,7 +69,7 @@ export function actionReflect(reflectIds, projection) {
             q2 = [(ssr.poly[1][0] + ssr.poly[2][0]) / 2, (ssr.poly[1][1] + ssr.poly[2][1]) / 2 ],
             p, q;
 
-        var isLong = (geoEuclideanDistance(p1, q1) > geoEuclideanDistance(p2, q2));
+        var isLong = (geoVecLength(p1, q1) > geoVecLength(p2, q2));
         if ((useLongAxis && isLong) || (!useLongAxis && !isLong)) {
             p = p1;
             q = q1;
@@ -92,7 +92,7 @@ export function actionReflect(reflectIds, projection) {
                 b * (c[0] - p[0]) - a * (c[1] - p[1]) + p[1]
             ];
             var loc2 = projection.invert(c2);
-            node = node.move(geoInterp(node.loc, loc2, t));
+            node = node.move(geoVecInterp(node.loc, loc2, t));
             graph = graph.replace(node);
         }
 

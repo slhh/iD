@@ -1,6 +1,8 @@
 {
     "fields": [
-        "operator"
+        "name",
+        "operator",
+        "payment_multi"
     ],
     "geometry": [
         "point",

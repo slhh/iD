@@ -116,7 +116,6 @@
                 "title": "تقسيم"
             }
         },
-        "zoom_in_edit": ".كبِّر للتعديل",
         "logout": "تسجيل الخروج",
         "commit": {
             "upload_explanation": "التغييرات التي قمتم بتحميلها ستكون مرئية على جميع الخرائط التي تستخدم بيانات خريطة الشارع المفتوح.",
@@ -144,17 +143,30 @@
         "background": {
             "title": "الخلفية",
             "description": "إعدادات الخلفية",
-            "percent_brightness": "{opacity}% سطوع",
             "reset": "أعد للوضع السابق"
         },
         "restore": {
-            "description": "هل ترغب في استعادة التغييرات غير المحفوظة من جلسة التحرير السابق؟",
-            "restore": "استعادة",
-            "reset": "أعد للوضع السابق"
+            "description": "هل ترغب في استعادة التغييرات غير المحفوظة من جلسة التحرير السابق؟"
         },
         "save": {
             "title": "حفظ",
             "no_changes": ".لا تغييرات للحفظ"
+        },
+        "intro": {
+            "graph": {
+                "block_number": "<value for addr:block_number>",
+                "city": "ثلاثة الأنهار",
+                "county": "<value for addr:county>",
+                "district": "<value for addr:district>",
+                "hamlet": "<value for addr:hamlet>",
+                "neighbourhood": "<value for addr:neighbourhood>",
+                "province": "<value for addr:province>",
+                "quarter": "<value for addr:quarter>",
+                "state": "<value for addr:state>",
+                "subdistrict": "<value for addr:subdistrict>",
+                "suburb": "<value for addr:suburb>",
+                "countrycode": "sa"
+            }
         }
     }
 }

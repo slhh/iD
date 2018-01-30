@@ -116,9 +116,6 @@
         "commit": {
             "cancel": "ยกเลิก"
         },
-        "infobox": {
-            "area": "พื้นที่"
-        },
         "geolocate": {
             "title": "แสดงตำแหน่งของฉัน"
         },
@@ -138,14 +135,23 @@
                 "description": "สิ่งก่อสร้าง"
             }
         },
-        "zoom": {
-            "in": "ขยาย",
-            "out": "ย่อ"
-        },
         "help": {
             "title": "ช่วยเหลือ"
         },
         "intro": {
+            "graph": {
+                "block_number": "<value for addr:block_number>",
+                "county": "<value for addr:county>",
+                "district": "<value for addr:district>",
+                "hamlet": "<value for addr:hamlet>",
+                "neighbourhood": "<value for addr:neighbourhood>",
+                "province": "<value for addr:province>",
+                "quarter": "<value for addr:quarter>",
+                "state": "<value for addr:state>",
+                "subdistrict": "<value for addr:subdistrict>",
+                "suburb": "<value for addr:suburb>",
+                "countrycode": "th"
+            },
             "areas": {
                 "title": "พื้นที่"
             },
@@ -235,9 +241,6 @@
                 "access_simple": {
                     "label": "อนุญาตการเข้าถึง"
                 },
-                "access_toilets": {
-                    "label": "การเข้าถึง"
-                },
                 "address": {
                     "label": "ที่อยู่",
                     "placeholders": {
@@ -295,39 +298,8 @@
                         "whole": "เลือดล้วนๆ"
                     }
                 },
-                "cardinal_direction": {
-                    "label": "ทิศ",
-                    "options": {
-                        "E": "ตะวันออก",
-                        "ENE": "ตะวันออกเฉียงเหนือเฉียงตะวันออก",
-                        "ESE": "ตะวันออกเฉียงใต้เฉียงตะวันออก",
-                        "N": "เหนือ",
-                        "NE": "ตะวันออกเฉียงเหนือ",
-                        "NNE": "ตะวันออกเฉียงเหนือเฉียงเหนือ",
-                        "NNW": "ตะวันตกเฉียงเหนือเฉียงเหนือ",
-                        "NW": "ตะวันตกเฉียงเหนือ",
-                        "S": "ใต้",
-                        "SE": "ตะวันออกเฉียงใต้",
-                        "SSE": "ตะวันออกเฉียงใต้เฉียงใต้",
-                        "SSW": "ตะวันตกเฉียงใต้เฉียงใต้",
-                        "SW": "ตะวันตกเฉียงใต้",
-                        "W": "ตะวันตก",
-                        "WNW": "ตะวันตกเฉียงเหนือเฉียงตะวันตก",
-                        "WSW": "ตะวันตกเฉียงใต้เฉียงตะวันตก"
-                    }
-                },
-                "clock_direction": {
-                    "label": "ทิศทางนาฬิกา",
-                    "options": {
-                        "anticlockwise": "ทวนเข็มนาฬิกา",
-                        "clockwise": "ตามเข็มนาฬิกา"
-                    }
-                },
                 "contact/webcam": {
                     "placeholder": "http://example.com/"
-                },
-                "content": {
-                    "label": "เนื้อหา"
                 },
                 "currency_multi": {
                     "label": "ชนิดเงินตรา"
@@ -349,9 +321,6 @@
                 },
                 "generator/source": {
                     "label": "แหล่งที่มา"
-                },
-                "golf_hole": {
-                    "placeholder": "หมายเลขหลุม (1-18)"
                 },
                 "internet_access": {
                     "label": "การเข้าใช้อินเทอร์เน็ต",

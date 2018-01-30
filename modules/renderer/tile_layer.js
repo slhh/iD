@@ -1,27 +1,30 @@
-import * as d3 from 'd3';
-import { d3geoTile } from '../lib/d3.geo.tile';
-import { utilPrefixCSSProperty } from '../util/index';
-import { rendererBackgroundSource } from './background_source.js';
+import { select as d3_select } from 'd3-selection';
+import { t } from '../util/locale';
+
+import { d3geoTile as d3_geoTile } from '../lib/d3.geo.tile';
+import { geoScaleToZoom, geoVecLength } from '../geo';
+import { utilPrefixCSSProperty } from '../util';
 
 
 export function rendererTileLayer(context) {
-    var tileSize = 256,
-        tile = d3geoTile(),
-        projection,
-        cache = {},
-        tileOrigin,
-        z,
-        transformProp = utilPrefixCSSProperty('Transform'),
-        source = rendererBackgroundSource.None();
+    var tileSize = 256;
+    var transformProp = utilPrefixCSSProperty('Transform');
+    var geotile = d3_geoTile();
+
+    var _projection;
+    var _cache = {};
+    var _tileOrigin;
+    var _zoom;
+    var _source;
 
 
     // blacklist overlay tiles around Null Island..
     function nearNullIsland(x, y, z) {
         if (z >= 7) {
-            var center = Math.pow(2, z - 1),
-                width = Math.pow(2, z - 6),
-                min = center - (width / 2),
-                max = center + (width / 2) - 1;
+            var center = Math.pow(2, z - 1);
+            var width = Math.pow(2, z - 6);
+            var min = center - (width / 2);
+            var max = center + (width / 2) - 1;
             return x >= min && x <= max && y >= min && y <= max;
         }
         return false;
@@ -29,8 +32,8 @@ export function rendererTileLayer(context) {
 
 
     function tileSizeAtZoom(d, z) {
-        var epsilon = 0.002;
-        return ((tileSize * Math.pow(2, z - d[2])) / tileSize) + epsilon;
+        var EPSILON = 0.002;
+        return ((tileSize * Math.pow(2, z - d[2])) / tileSize) + EPSILON;
     }
 
 
@@ -39,14 +42,15 @@ export function rendererTileLayer(context) {
         return [
             Math.floor(t[0] * power),
             Math.floor(t[1] * power),
-            t[2] + distance];
+            t[2] + distance
+        ];
     }
 
 
     function lookUp(d) {
         for (var up = -1; up > -d[2]; up--) {
             var tile = atZoom(d, up);
-            if (cache[source.url(tile)] !== false) {
+            if (_cache[_source.url(tile)] !== false) {
                 return tile;
             }
         }
@@ -54,7 +58,8 @@ export function rendererTileLayer(context) {
 
 
     function uniqueBy(a, n) {
-        var o = [], seen = {};
+        var o = [];
+        var seen = {};
         for (var i = 0; i < a.length; i++) {
             if (seen[a[i][n]] === undefined) {
                 o.push(a[i]);
@@ -66,61 +71,75 @@ export function rendererTileLayer(context) {
 
 
     function addSource(d) {
-        d.push(source.url(d));
+        d.push(_source.url(d));
         return d;
     }
 
 
     // Update tiles based on current state of `projection`.
     function background(selection) {
-        tile.scale(projection.scale() * 2 * Math.PI)
-            .translate(projection.translate());
+        _zoom = geoScaleToZoom(_projection.scale(), tileSize);
 
-        tileOrigin = [
-            projection.scale() * Math.PI - projection.translate()[0],
-            projection.scale() * Math.PI - projection.translate()[1]];
+        var pixelOffset;
+        if (_source) {
+            pixelOffset = [
+                _source.offset()[0] * Math.pow(2, _zoom),
+                _source.offset()[1] * Math.pow(2, _zoom)
+            ];
+        } else {
+            pixelOffset = [0, 0];
+        }
 
-        z = Math.max(Math.log(projection.scale() * 2 * Math.PI) / Math.log(2) - 8, 0);
+        var translate = [
+            _projection.translate()[0] + pixelOffset[0],
+            _projection.translate()[1] + pixelOffset[1]
+        ];
+
+        geotile
+            .scale(_projection.scale() * 2 * Math.PI)
+            .translate(translate);
+
+        _tileOrigin = [
+            _projection.scale() * Math.PI - translate[0],
+            _projection.scale() * Math.PI - translate[1]
+        ];
 
         render(selection);
     }
 
 
     // Derive the tiles onscreen, remove those offscreen and position them.
-    // Important that this part not depend on `projection` because it's
+    // Important that this part not depend on `_projection` because it's
     // rentered when tiles load/error (see #644).
     function render(selection) {
+        if (!_source) return;
         var requests = [];
-        var showDebug = context.getDebug('tile') && !source.overlay;
+        var showDebug = context.getDebug('tile') && !_source.overlay;
 
-        if (source.validZoom(z)) {
-            tile().forEach(function(d) {
+        if (_source.validZoom(_zoom)) {
+            geotile().forEach(function(d) {
                 addSource(d);
                 if (d[3] === '') return;
-                if (typeof d[3] !== 'string') return; // Workaround for chrome crash https://github.com/openstreetmap/iD/issues/2295
+                if (typeof d[3] !== 'string') return; // Workaround for #2295
                 requests.push(d);
-                if (cache[d[3]] === false && lookUp(d)) {
+                if (_cache[d[3]] === false && lookUp(d)) {
                     requests.push(addSource(lookUp(d)));
                 }
             });
 
             requests = uniqueBy(requests, 3).filter(function(r) {
-                if (!!source.overlay && nearNullIsland(r[0], r[1], r[2])) {
+                if (!!_source.overlay && nearNullIsland(r[0], r[1], r[2])) {
                     return false;
                 }
                 // don't re-request tiles which have failed in the past
-                return cache[r[3]] !== false;
+                return _cache[r[3]] !== false;
             });
         }
 
-        var pixelOffset = [
-            source.offset()[0] * Math.pow(2, z),
-            source.offset()[1] * Math.pow(2, z)
-        ];
 
         function load(d) {
-            cache[d[3]] = true;
-            d3.select(this)
+            _cache[d[3]] = true;
+            d3_select(this)
                 .on('error', null)
                 .on('load', null)
                 .classed('tile-loaded', true);
@@ -128,8 +147,8 @@ export function rendererTileLayer(context) {
         }
 
         function error(d) {
-            cache[d[3]] = false;
-            d3.select(this)
+            _cache[d[3]] = false;
+            d3_select(this)
                 .on('error', null)
                 .on('load', null)
                 .remove();
@@ -137,21 +156,43 @@ export function rendererTileLayer(context) {
         }
 
         function imageTransform(d) {
-            var _ts = tileSize * Math.pow(2, z - d[2]);
-            var scale = tileSizeAtZoom(d, z);
+            var ts = tileSize * Math.pow(2, _zoom - d[2]);
+            var scale = tileSizeAtZoom(d, _zoom);
             return 'translate(' +
-                ((d[0] * _ts) - tileOrigin[0] + pixelOffset[0]) + 'px,' +
-                ((d[1] * _ts) - tileOrigin[1] + pixelOffset[1]) + 'px)' +
+                ((d[0] * ts) - _tileOrigin[0]) + 'px,' +
+                ((d[1] * ts) - _tileOrigin[1]) + 'px) ' +
                 'scale(' + scale + ',' + scale + ')';
         }
 
-        function debugTransform(d) {
-            var _ts = tileSize * Math.pow(2, z - d[2]);
-            var scale = tileSizeAtZoom(d, z);
-            return 'translate(' +
-                ((d[0] * _ts) - tileOrigin[0] + pixelOffset[0] + scale * (tileSize / 4)) + 'px,' +
-                ((d[1] * _ts) - tileOrigin[1] + pixelOffset[1] + scale * (tileSize / 2)) + 'px)';
+        function tileCenter(d) {
+            var ts = tileSize * Math.pow(2, _zoom - d[2]);
+            return [
+                ((d[0] * ts) - _tileOrigin[0] + (ts / 2)),
+                ((d[1] * ts) - _tileOrigin[1] + (ts / 2))
+            ];
         }
+
+        function debugTransform(d) {
+            var coord = tileCenter(d);
+            return 'translate(' + coord[0] + 'px,' + coord[1] + 'px)';
+        }
+
+
+        // Pick a representative tile near the center of the viewport
+        // (This is useful for sampling the imagery vintage)
+        var dims = geotile.size();
+        var mapCenter = [dims[0] / 2, dims[1] / 2];
+        var minDist = Math.max(dims[0], dims[1]);
+        var nearCenter;
+
+        requests.forEach(function(d) {
+            var c = tileCenter(d);
+            var dist = geoVecLength(c, mapCenter);
+            if (dist < minDist) {
+                minDist = dist;
+                nearCenter = d;
+            }
+        });
 
 
         var image = selection.selectAll('img')
@@ -160,8 +201,9 @@ export function rendererTileLayer(context) {
         image.exit()
             .style(transformProp, imageTransform)
             .classed('tile-removing', true)
+            .classed('tile-center', false)
             .each(function() {
-                var tile = d3.select(this);
+                var tile = d3_select(this);
                 window.setTimeout(function() {
                     if (tile.classed('tile-removing')) {
                         tile.remove();
@@ -178,7 +220,9 @@ export function rendererTileLayer(context) {
           .merge(image)
             .style(transformProp, imageTransform)
             .classed('tile-debug', showDebug)
-            .classed('tile-removing', false);
+            .classed('tile-removing', false)
+            .classed('tile-center', function(d) { return d === nearCenter; });
+
 
 
         var debug = selection.selectAll('.tile-label-debug')
@@ -187,34 +231,63 @@ export function rendererTileLayer(context) {
         debug.exit()
             .remove();
 
-        debug.enter()
-          .append('div')
-            .attr('class', 'tile-label-debug')
-          .merge(debug)
-            .text(function(d) { return d[2] + ' / ' + d[0] + ' / ' + d[1]; })
-            .style(transformProp, debugTransform);
+        if (showDebug) {
+            var debugEnter = debug.enter()
+                .append('div')
+                .attr('class', 'tile-label-debug');
+
+            debugEnter
+                .append('div')
+                .attr('class', 'tile-label-debug-coord');
+
+            debugEnter
+                .append('div')
+                .attr('class', 'tile-label-debug-vintage');
+
+            debug = debug.merge(debugEnter);
+
+            debug
+                .style(transformProp, debugTransform);
+
+            debug
+                .selectAll('.tile-label-debug-coord')
+                .text(function(d) { return d[2] + ' / ' + d[0] + ' / ' + d[1]; });
+
+            debug
+                .selectAll('.tile-label-debug-vintage')
+                .each(function(d) {
+                    var span = d3_select(this);
+                    var center = context._projection.invert(tileCenter(d));
+                    _source.getMetadata(center, d, function(err, result) {
+                        span.text((result && result.vintage && result.vintage.range) ||
+                            t('info_panels.background.vintage') + ': ' + t('info_panels.background.unknown')
+                        );
+                    });
+                });
+        }
+
     }
 
 
     background.projection = function(_) {
-        if (!arguments.length) return projection;
-        projection = _;
+        if (!arguments.length) return _projection;
+        _projection = _;
         return background;
     };
 
 
     background.dimensions = function(_) {
-        if (!arguments.length) return tile.size();
-        tile.size(_);
+        if (!arguments.length) return geotile.size();
+        geotile.size(_);
         return background;
     };
 
 
     background.source = function(_) {
-        if (!arguments.length) return source;
-        source = _;
-        cache = {};
-        tile.scaleExtent(source.scaleExtent);
+        if (!arguments.length) return _source;
+        _source = _;
+        _cache = {};
+        geotile.scaleExtent(_source.scaleExtent);
         return background;
     };
 

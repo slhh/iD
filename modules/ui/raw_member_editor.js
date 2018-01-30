@@ -1,5 +1,10 @@
-import * as d3 from 'd3';
-import { d3combobox } from '../lib/d3.combobox.js';
+import {
+    event as d3_event,
+    select as d3_select
+} from 'd3-selection';
+
+import { d3combobox as d3_combobox } from '../lib/d3.combobox.js';
+
 import { t } from '../util/locale';
 import { actionChangeMember, actionDeleteMember } from '../actions';
 import { modeBrowse, modeSelect } from '../modes';
@@ -15,18 +20,18 @@ import {
 
 
 export function uiRawMemberEditor(context) {
-    var id,
-        taginfo = services.taginfo;
+    var taginfo = services.taginfo,
+        _entityID;
 
 
     function selectMember(d) {
-        d3.event.preventDefault();
+        d3_event.preventDefault();
         context.enter(modeSelect(context, [d.id]));
     }
 
 
     function changeRole(d) {
-        var role = d3.select(this).property('value');
+        var role = d3_select(this).property('value');
         var member = { id: d.id, type: d.type, role: role };
         context.perform(
             actionChangeMember(d.relation.id, member, d.index),
@@ -48,10 +53,10 @@ export function uiRawMemberEditor(context) {
 
 
     function rawMemberEditor(selection) {
-        var entity = context.entity(id),
+        var entity = context.entity(_entityID),
             memberships = [];
 
-        entity.members.forEach(function(member, index) {
+        entity.members.slice(0, 1000).forEach(function(member, index) {
             memberships.push({
                 index: index,
                 id: member.id,
@@ -62,19 +67,16 @@ export function uiRawMemberEditor(context) {
             });
         });
 
-        selection.call(uiDisclosure()
-            .title(t('inspector.all_members') + ' (' + memberships.length + ')')
+        var gt = entity.members.length > 1000 ? '>' : '';
+        selection.call(uiDisclosure(context, 'raw_member_editor', true)
+            .title(t('inspector.all_members') + ' (' + gt + memberships.length + ')')
             .expanded(true)
-            .on('toggled', toggled)
+            .updatePreference(false)
+            .on('toggled', function(expanded) {
+                if (expanded) { selection.node().parentNode.scrollTop += 200; }
+            })
             .content(content)
         );
-
-
-        function toggled(expanded) {
-            if (expanded) {
-                selection.node().parentNode.scrollTop += 200;
-            }
-        }
 
 
         function content(wrap) {
@@ -105,7 +107,7 @@ export function uiRawMemberEditor(context) {
             enter
                 .each(function(d) {
                     if (d.member) {
-                        var label = d3.select(this).append('label')
+                        var label = d3_select(this).append('label')
                             .attr('class', 'form-label')
                             .append('a')
                             .attr('href', '#')
@@ -123,7 +125,7 @@ export function uiRawMemberEditor(context) {
                             .text(function(d) { return utilDisplayName(d.member); });
 
                     } else {
-                        d3.select(this).append('label')
+                        d3_select(this).append('label')
                             .attr('class', 'form-label')
                             .text(t('inspector.incomplete', { id: d.id }));
                     }
@@ -152,7 +154,7 @@ export function uiRawMemberEditor(context) {
 
 
             function bindTypeahead(d) {
-                var row = d3.select(this),
+                var row = d3_select(this),
                     role = row.selectAll('input.member-role');
 
                 function sort(value, data) {
@@ -168,7 +170,8 @@ export function uiRawMemberEditor(context) {
                     return sameletter.concat(other);
                 }
 
-                role.call(d3combobox()
+                role.call(d3_combobox()
+                    .container(context.container())
                     .fetcher(function(role, callback) {
                         var rtype = entity.tags.type;
                         taginfo.roles({
@@ -184,18 +187,18 @@ export function uiRawMemberEditor(context) {
 
 
             function unbind() {
-                var row = d3.select(this);
+                var row = d3_select(this);
 
                 row.selectAll('input.member-role')
-                    .call(d3combobox.off);
+                    .call(d3_combobox.off);
             }
         }
     }
 
 
     rawMemberEditor.entityID = function(_) {
-        if (!arguments.length) return id;
-        id = _;
+        if (!arguments.length) return _entityID;
+        _entityID = _;
         return rawMemberEditor;
     };
 

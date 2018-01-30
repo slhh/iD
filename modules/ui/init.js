@@ -1,11 +1,17 @@
-import * as d3 from 'd3';
-import { d3keybinding } from '../lib/d3.keybinding.js';
+import {
+    event as d3_event,
+    select as d3_select
+} from 'd3-selection';
+
+import { d3keybinding as d3_keybinding } from '../lib/d3.keybinding.js';
+
 import { t, textDirection } from '../util/locale';
 import { tooltip } from '../util/tooltip';
 
-import { svgDefs, svgIcon } from '../svg/index';
-import { modeBrowse } from '../modes/index';
-import { behaviorHash } from '../behavior/index';
+import { behaviorHash } from '../behavior';
+import { modeBrowse } from '../modes';
+import { services } from '../services';
+import { svgDefs, svgIcon } from '../svg';
 import { utilGetDimensions } from '../util/dimensions';
 
 import { uiAccount } from './account';
@@ -17,13 +23,16 @@ import { uiFullScreen } from './full_screen';
 import { uiGeolocate } from './geolocate';
 import { uiHelp } from './help';
 import { uiInfo } from './info';
+import { uiIntro } from './intro';
 import { uiLoading } from './loading';
 import { uiMapData } from './map_data';
 import { uiMapInMap } from './map_in_map';
 import { uiModes } from './modes';
+import { uiNotice } from './notice';
 import { uiRestore } from './restore';
 import { uiSave } from './save';
 import { uiScale } from './scale';
+import { uiShortcuts } from './shortcuts';
 import { uiSidebar } from './sidebar';
 import { uiSpinner } from './spinner';
 import { uiSplash } from './splash';
@@ -79,11 +88,9 @@ export function uiInit(context) {
             .call(map);
 
         content
-            .call(uiMapInMap(context));
-
-        content
-            .append('div')
-            .call(uiInfo(context));
+            .call(uiMapInMap(context))
+            .call(uiInfo(context))
+            .call(uiNotice(context));
 
         bar
             .append('div')
@@ -197,6 +204,7 @@ export function uiInit(context) {
 
         aboutList
             .append('li')
+            .attr('class', 'version')
             .call(uiVersion(context));
 
         var issueLinks = aboutList
@@ -231,6 +239,23 @@ export function uiInit(context) {
             .call(uiContributors(context));
 
 
+        var photoviewer = content
+            .append('div')
+            .attr('id', 'photoviewer')
+            .classed('al', true)       // 'al'=left,  'ar'=right
+            .classed('hide', true);
+
+        photoviewer
+            .append('button')
+            .attr('class', 'thumb-hide')
+            .on('click', function () {
+                if (services.mapillary) { services.mapillary.hideViewer(); }
+                if (services.openstreetcam) { services.openstreetcam.hideViewer(); }
+            })
+            .append('div')
+            .call(svgIcon('#icon-close'));
+
+
         window.onbeforeunload = function() {
             return context.save();
         };
@@ -247,26 +272,24 @@ export function uiInit(context) {
             map.dimensions(mapDimensions);
         }
 
-        d3.select(window)
+        d3_select(window)
             .on('resize.editor', onResize);
 
         onResize();
 
         function pan(d) {
             return function() {
-                d3.event.preventDefault();
-                if (!context.inIntro()) {
-                    context.pan(d, 100);
-                }
+                d3_event.preventDefault();
+                context.pan(d, 100);
             };
         }
 
 
         // pan amount
-        var pa = 10;
+        var pa = 80;
 
-        var keybinding = d3keybinding('main')
-            .on('⌫', function() { d3.event.preventDefault(); })
+        var keybinding = d3_keybinding('main')
+            .on('⌫', function() { d3_event.preventDefault(); })
             .on('←', pan([pa, 0]))
             .on('↑', pan([0, pa]))
             .on('→', pan([-pa, 0]))
@@ -276,31 +299,42 @@ export function uiInit(context) {
             .on(['⇧→', uiCmd('⌘→')], pan([-mapDimensions[0], 0]))
             .on(['⇧↓', uiCmd('⌘↓')], pan([0, -mapDimensions[1]]));
 
-        d3.select(document)
+        d3_select(document)
             .call(keybinding);
 
         context.enter(modeBrowse(context));
 
         if (!uiInitCounter++) {
+            if (!hash.startWalkthrough) {
+                context.container()
+                    .call(uiSplash(context))
+                    .call(uiRestore(context));
+            }
+
             context.container()
-                .call(uiSplash(context))
-                .call(uiRestore(context));
+                .call(uiShortcuts(context));
         }
 
-        var authenticating = uiLoading(context)
-            .message(t('loading_auth'))
-            .blocking(true);
+        var osm = context.connection(),
+            auth = uiLoading(context).message(t('loading_auth')).blocking(true);
 
-        context.connection()
-            .on('authLoading.ui', function() {
-                context.container()
-                    .call(authenticating);
-            })
-            .on('authDone.ui', function() {
-                authenticating.close();
-            });
+        if (osm && auth) {
+            osm
+                .on('authLoading.ui', function() {
+                    context.container()
+                        .call(auth);
+                })
+                .on('authDone.ui', function() {
+                    auth.close();
+                });
+        }
 
         uiInitCounter++;
+
+        if (hash.startWalkthrough) {
+            hash.startWalkthrough = false;
+            context.container().call(uiIntro(context));
+        }
     }
 
 
@@ -308,7 +342,7 @@ export function uiInit(context) {
 
     function ui(node, callback) {
         renderCallback = callback;
-        var container = d3.select(node);
+        var container = d3_select(node);
         context.container(container);
         context.loadLocale(function(err) {
             if (!err) {

@@ -1,6 +1,7 @@
 {
     "icon": "wheelchair",
     "fields": [
+        "name",
         "operator",
         "address",
         "building_area",
@@ -18,12 +19,17 @@
         "living",
         "nursing",
         "old",
-        "senior"
+        "senior",
+        "assisted living"
     ],
     "tags": {
         "amenity": "social_facility",
         "social_facility": "nursing_home",
         "social_facility:for": "senior"
+    },
+    "reference": {
+        "key": "social_facility",
+        "value": "nursing_home"
     },
     "name": "Nursing Home"
 }

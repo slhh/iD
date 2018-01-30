@@ -203,7 +203,6 @@
             "localized_translation_language": "භාෂාවක් තෝරාගන්න",
             "localized_translation_name": "නම"
         },
-        "zoom_in_edit": "සංස්කරණය කිරීම සදහා සමීප කරන්න ",
         "logout": "ඉවත් වන්න ",
         "loading_auth": "OpenStreetMap වෙත සම්බන්ද වෙමින්...",
         "feature_info": {
@@ -271,7 +270,6 @@
         "background": {
             "title": "පසුබිම",
             "description": "පසුබිම් සැකසුම්",
-            "percent_brightness": "දීප්තිමත් බාවය {opacity} % ",
             "none": "කිසිවක් නැත",
             "custom": "රිසි පරදී සැකසු",
             "custom_button": "පසුතලය රිසි පරිදි සැකසීම සදහා",
@@ -340,9 +338,7 @@
         },
         "restore": {
             "heading": "ඔබ සතුව සුරකීම නොකරන ලද වෙනස්කම් ඇත",
-            "description": "ඔබට මීට පෙර සංස්කරණය කිරීමේදී  සුරැකීමට නොහැකි වූ වෙනස් කිරීම් නැවත පිහිටුවීමට අවශ්‍යද ? ",
-            "restore": "ප්‍රතිස්ථාපනය කිරීම",
-            "reset": "යළි පිහිටුවනවා"
+            "description": "ඔබට මීට පෙර සංස්කරණය කිරීමේදී  සුරැකීමට නොහැකි වූ වෙනස් කිරීම් නැවත පිහිටුවීමට අවශ්‍යද ? "
         },
         "save": {
             "title": "සුරකින්න",
@@ -358,7 +354,6 @@
                 "next": "ඊළඟ>",
                 "restore": "ප්‍රතිසංස්ථානය",
                 "delete": "මකාදමන ලද කොටස් මගහරින්න",
-                "download_changes": "හෝ වෙනස්කම් බාගත කරන්න",
                 "done": "සියලු නොගැලපීම නිරාකරණය කෙරිණි"
             }
         },
@@ -371,12 +366,10 @@
             "google": "Google+ හි බෙදා හරින්න"
         },
         "confirm": {
-            "okay": "හරි",
             "cancel": "අහෝසි කරන්න"
         },
         "splash": {
-            "welcome": "iD OpenStreetMap සංස්කරණ වේදසටහන වෙත සාදරයෙන් පිළිගනිමු",
-            "start": "දෙන සංස්කරණය කරන්න"
+            "welcome": "iD OpenStreetMap සංස්කරණ වේදසටහන වෙත සාදරයෙන් පිළිගනිමු"
         },
         "source_switch": {
             "live": "සජීවී"
@@ -392,14 +385,23 @@
             "untagged_area": "සටහනක් නොයෙදූ ප්‍රදේශයක්",
             "deprecated_tags": "{tags} : බාවිතයෙන් ඉවත් කර ඇත"
         },
-        "zoom": {
-            "in": "විශාලනය වැඩි කරන්න",
-            "out": "විශාලනය අඩු කරන්න"
-        },
         "help": {
             "title": "සහය"
         },
         "intro": {
+            "graph": {
+                "block_number": "<value for addr:block_number>",
+                "county": "<value for addr:county>",
+                "district": "<value for addr:district>",
+                "hamlet": "<value for addr:hamlet>",
+                "neighbourhood": "<value for addr:neighbourhood>",
+                "province": "<value for addr:province>",
+                "quarter": "<value for addr:quarter>",
+                "state": "<value for addr:state>",
+                "subdistrict": "<value for addr:subdistrict>",
+                "suburb": "<value for addr:suburb>",
+                "countrycode": "lk"
+            },
             "navigation": {
                 "title": "මර්ගෝපදේශනය"
             },

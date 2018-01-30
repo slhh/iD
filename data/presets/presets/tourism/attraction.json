@@ -1,6 +1,7 @@
 {
-    "icon": "monument",
+    "icon": "star",
     "fields": [
+        "name",
         "operator",
         "address"
     ],

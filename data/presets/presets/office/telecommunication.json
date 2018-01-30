@@ -1,18 +1,23 @@
 {
-    "icon": "commercial",
+    "icon": "telephone",
     "fields": [
+        "name",
         "address",
         "building_area",
         "opening_hours"
     ],
     "geometry": [
         "point",
-        "vertex",
         "area"
     ],
     "tags": {
         "office": "telecommunication"
     },
-    "terms": [],
+    "terms": [
+        "communication",
+        "internet",
+        "phone",
+        "voice"
+    ],
     "name": "Telecom Office"
 }

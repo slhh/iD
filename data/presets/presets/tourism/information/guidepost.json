@@ -1,6 +1,8 @@
 {
     "icon": "information",
     "fields": [
+        "name",
+        "elevation",
         "operator",
         "ref"
     ],
@@ -8,9 +10,16 @@
         "point",
         "vertex"
     ],
+    "terms": [
+        "signpost"
+    ],
     "tags": {
         "tourism": "information",
         "information": "guidepost"
+    },
+    "reference": {
+        "key": "information",
+        "value": "guidepost"
     },
     "name": "Guidepost"
 }

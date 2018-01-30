@@ -1,5 +1,8 @@
 {
-    "icon": "commercial",
+    "icon": "suitcase",
+    "fields": [
+        "name"
+    ],
     "geometry": [
         "area"
     ],
@@ -7,5 +10,6 @@
         "landuse": "commercial"
     },
     "terms": [],
+    "matchScore": 0.9,
     "name": "Commercial Area"
 }

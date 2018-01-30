@@ -1,6 +1,7 @@
 {
     "icon": "religious-muslim",
     "fields": [
+        "name",
         "denomination",
         "building_area",
         "address",
@@ -16,6 +17,10 @@
     "tags": {
         "amenity": "place_of_worship",
         "religion": "muslim"
+    },
+    "reference": {
+        "key": "amenity",
+        "value": "place_of_worship"
     },
     "name": "Mosque"
 }

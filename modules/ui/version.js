@@ -1,6 +1,7 @@
 import { t } from '../util/locale';
-import { svgIcon } from '../svg/index';
+import { svgIcon } from '../svg';
 import { tooltip } from '../util/tooltip';
+
 
 // these are module variables so they are preserved through a ui.restart()
 var sawVersion = null,
@@ -30,14 +31,13 @@ export function uiVersion(context) {
 
         // only show new version indicator to users that have used iD before
         if (isNewVersion && !isNewUser) {
-            var fragment = currVersion.replace(/\./g, '');
             selection
                 .append('div')
                 .attr('class', 'badge')
                 .append('a')
                 .attr('target', '_blank')
                 .attr('tabindex', -1)
-                .attr('href', 'https://github.com/openstreetmap/iD/blob/master/CHANGELOG.md#' + fragment)
+                .attr('href', 'https://github.com/openstreetmap/iD/blob/master/CHANGELOG.md#whats-new')
                 .call(svgIcon('#gift-11'))
                 .call(tooltip()
                     .title(t('version.whats_new', { version: currVersion }))

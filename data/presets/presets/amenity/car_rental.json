@@ -1,7 +1,9 @@
 {
     "icon": "car",
     "fields": [
-        "operator"
+        "name",
+        "operator",
+        "payment_multi"
     ],
     "geometry": [
         "point",

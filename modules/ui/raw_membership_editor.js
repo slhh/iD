@@ -1,6 +1,15 @@
-import * as d3 from 'd3';
-import _ from 'lodash';
-import { d3combobox } from '../lib/d3.combobox.js';
+import _extend from 'lodash-es/extend';
+import _filter from 'lodash-es/filter';
+import _forEach from 'lodash-es/forEach';
+import _groupBy from 'lodash-es/groupBy';
+
+import {
+    event as d3_event,
+    select as d3_select
+} from 'd3-selection';
+
+import { d3combobox as d3_combobox } from '../lib/d3.combobox.js';
+
 import { t } from '../util/locale';
 
 import {
@@ -8,42 +17,45 @@ import {
     actionAddMember,
     actionChangeMember,
     actionDeleteMember
-} from '../actions/index';
+} from '../actions';
 
-import { modeSelect } from '../modes/index';
-import { osmEntity, osmRelation } from '../osm/index';
-import { services } from '../services/index';
-import { svgIcon } from '../svg/index';
+import { modeSelect } from '../modes';
+import { osmEntity, osmRelation } from '../osm';
+import { services } from '../services';
+import { svgIcon } from '../svg';
 import { uiDisclosure } from './disclosure';
-import { utilDisplayName, utilNoAuto } from '../util/index';
+import { utilDisplayName, utilNoAuto } from '../util';
 
 
 export function uiRawMembershipEditor(context) {
     var taginfo = services.taginfo,
-        id, showBlank;
+        _entityID,
+        _showBlank;
 
 
     function selectRelation(d) {
-        d3.event.preventDefault();
+        d3_event.preventDefault();
         context.enter(modeSelect(context, [d.relation.id]));
     }
 
 
     function changeRole(d) {
-        var role = d3.select(this).property('value');
+        var role = d3_select(this).property('value');
         context.perform(
-            actionChangeMember(d.relation.id, _.extend({}, d.member, { role: role }), d.index),
+            actionChangeMember(d.relation.id, _extend({}, d.member, { role: role }), d.index),
             t('operations.change_role.annotation')
         );
     }
 
 
     function addMembership(d, role) {
-        showBlank = false;
+        _showBlank = false;
+
+        var member = { id: _entityID, type: context.entity(_entityID).type, role: role };
 
         if (d.relation) {
             context.perform(
-                actionAddMember(d.relation.id, { id: id, type: context.entity(id).type, role: role }),
+                actionAddMember(d.relation.id, member),
                 t('operations.add_member.annotation')
             );
 
@@ -51,7 +63,7 @@ export function uiRawMembershipEditor(context) {
             var relation = osmRelation();
             context.perform(
                 actionAddEntity(relation),
-                actionAddMember(relation.id, { id: id, type: context.entity(id).type, role: role }),
+                actionAddMember(relation.id, member),
                 t('operations.add.annotation.relation')
             );
 
@@ -69,15 +81,12 @@ export function uiRawMembershipEditor(context) {
 
 
     function relations(q) {
-        var newRelation = {
-                relation: null,
-                value: t('inspector.new_relation')
-            },
-            result = [],
-            graph = context.graph();
+        var newRelation = { relation: null, value: t('inspector.new_relation') };
+        var result = [];
+        var graph = context.graph();
 
         context.intersects(context.extent()).forEach(function(entity) {
-            if (entity.type !== 'relation' || entity.id === id)
+            if (entity.type !== 'relation' || entity.id === _entityID)
                 return;
 
             var matched = context.presets().match(entity, graph),
@@ -88,10 +97,7 @@ export function uiRawMembershipEditor(context) {
             if (q && value.toLowerCase().indexOf(q.toLowerCase()) === -1)
                 return;
 
-            result.push({
-                relation: entity,
-                value: value
-            });
+            result.push({ relation: entity, value: value });
         });
 
         result.sort(function(a, b) {
@@ -99,15 +105,19 @@ export function uiRawMembershipEditor(context) {
         });
 
         // Dedupe identical names by appending relation id - see #2891
-        var dupeGroups = _(result)
-            .groupBy('value')
-            .filter(function(v) { return v.length > 1; })
-            .value();
+        var dupeGroups = _filter(
+            _groupBy(result, 'value'),
+            function(v) { return v.length > 1; }
+        );
 
         dupeGroups.forEach(function(group) {
             group.forEach(function(obj) {
                 obj.value += ' ' + obj.relation.id;
             });
+        });
+
+        _forEach(result, function(obj) {
+            obj.title = obj.value;
         });
 
         result.unshift(newRelation);
@@ -116,10 +126,11 @@ export function uiRawMembershipEditor(context) {
 
 
     function rawMembershipEditor(selection) {
-        var entity = context.entity(id),
+        var entity = context.entity(_entityID),
+            parents = context.graph().parentRelations(entity),
             memberships = [];
 
-        context.graph().parentRelations(entity).forEach(function(relation) {
+        parents.slice(0, 1000).forEach(function(relation) {
             relation.members.forEach(function(member, index) {
                 if (member.id === entity.id) {
                     memberships.push({ relation: relation, member: member, index: index });
@@ -127,19 +138,16 @@ export function uiRawMembershipEditor(context) {
             });
         });
 
-        selection.call(uiDisclosure()
-            .title(t('inspector.all_relations') + ' (' + memberships.length + ')')
+        var gt = parents.length > 1000 ? '>' : '';
+        selection.call(uiDisclosure(context, 'raw_membership_editor', true)
+            .title(t('inspector.all_relations') + ' (' + gt + memberships.length + ')')
             .expanded(true)
-            .on('toggled', toggled)
+            .updatePreference(false)
+            .on('toggled', function(expanded) {
+                if (expanded) { selection.node().parentNode.scrollTop += 200; }
+            })
             .content(content)
         );
-
-
-        function toggled(expanded) {
-            if (expanded) {
-                selection.node().parentNode.scrollTop += 200;
-            }
-        }
 
 
         function content(wrap) {
@@ -208,7 +216,7 @@ export function uiRawMembershipEditor(context) {
 
 
             var newrow = list.selectAll('.member-row-new')
-                .data(showBlank ? [0] : []);
+                .data(_showBlank ? [0] : []);
 
             newrow.exit()
                 .remove();
@@ -243,7 +251,8 @@ export function uiRawMembershipEditor(context) {
                 .merge(enter);
 
             newrow.selectAll('.member-entity-input')
-                .call(d3combobox()
+                .call(d3_combobox()
+                    .container(context.container())
                     .minItems(1)
                     .fetcher(function(value, callback) { callback(relations(value)); })
                     .on('accept', onAccept)
@@ -261,7 +270,7 @@ export function uiRawMembershipEditor(context) {
             addrel
                 .call(svgIcon('#icon-plus', 'light'))
                 .on('click', function() {
-                    showBlank = true;
+                    _showBlank = true;
                     content(wrap);
                     list.selectAll('.member-entity-input').node().focus();
                 });
@@ -274,7 +283,7 @@ export function uiRawMembershipEditor(context) {
 
 
             function bindTypeahead(d) {
-                var row = d3.select(this),
+                var row = d3_select(this),
                     role = row.selectAll('input.member-role');
 
                 function sort(value, data) {
@@ -290,13 +299,14 @@ export function uiRawMembershipEditor(context) {
                     return sameletter.concat(other);
                 }
 
-                role.call(d3combobox()
+                role.call(d3_combobox()
+                    .container(context.container())
                     .fetcher(function(role, callback) {
                         var rtype = d.relation.tags.type;
                         taginfo.roles({
                             debounce: true,
                             rtype: rtype || '',
-                            geometry: context.geometry(id),
+                            geometry: context.geometry(_entityID),
                             query: role
                         }, function(err, data) {
                             if (!err) callback(sort(role, data));
@@ -306,18 +316,18 @@ export function uiRawMembershipEditor(context) {
 
 
             function unbind() {
-                var row = d3.select(this);
+                var row = d3_select(this);
 
                 row.selectAll('input.member-role')
-                    .call(d3combobox.off);
+                    .call(d3_combobox.off);
             }
         }
     }
 
 
     rawMembershipEditor.entityID = function(_) {
-        if (!arguments.length) return id;
-        id = _;
+        if (!arguments.length) return _entityID;
+        _entityID = _;
         return rawMembershipEditor;
     };
 

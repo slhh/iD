@@ -3,6 +3,9 @@
         "point",
         "area"
     ],
+    "fields": [
+        "name"
+    ],
     "tags": {
         "place": "square"
     },

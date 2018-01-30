@@ -119,19 +119,6 @@
             "deleted": "நீக்கப்பட்டது",
             "created": "உருவாக்கப்பட்டது"
         },
-        "infobox": {
-            "selected": "{n} தேர்ந்தெடுக்கப் பட்டுள்ளது",
-            "geometry": "வடிவியல்",
-            "closed": "மூடப்பட்டுள்ளது",
-            "center": "நடு பகுதி",
-            "perimeter": "சுற்றளவு",
-            "length": "நீளம்",
-            "area": "பரப்பளவு",
-            "centroid": "திணிவு",
-            "location": "இடம்",
-            "metric": "மெட்ரிக்",
-            "imperial": "இம்பீரியல்"
-        },
         "geometry": {
             "point": "புள்ளி",
             "vertex": "உச்சி",
@@ -170,7 +157,6 @@
         "background": {
             "title": "பின்னணி",
             "description": "பின்னணி அமைப்புகள்",
-            "percent_brightness": "{opacity}% ஒளிர்வு",
             "none": "எதுவுமில்லை",
             "custom": "தனிப்பயன்",
             "reset": "மீட்டமைக்க"
@@ -212,10 +198,6 @@
                 "description": "பிற"
             }
         },
-        "restore": {
-            "restore": "மீட்டமை",
-            "reset": "மீட்டமை"
-        },
         "save": {
             "title": "சேமி",
             "no_changes": "சேமிப்பதற்கான மாற்றங்கள் இல்லை.",
@@ -234,24 +216,29 @@
             "help_link_text": "விவரங்கள்"
         },
         "confirm": {
-            "okay": "சரி",
             "cancel": "ரத்து"
-        },
-        "splash": {
-            "start": "இப்போது திருத்து"
         },
         "tag_reference": {
             "description": "விளக்கம்"
-        },
-        "zoom": {
-            "in": "பெரிதாக்கு",
-            "out": "சிறிதாக்கு"
         },
         "help": {
             "title": "உதவி"
         },
         "intro": {
             "done": "முடிந்தது",
+            "graph": {
+                "block_number": "<value for addr:block_number>",
+                "county": "<value for addr:county>",
+                "district": "<value for addr:district>",
+                "hamlet": "<value for addr:hamlet>",
+                "neighbourhood": "<value for addr:neighbourhood>",
+                "province": "<value for addr:province>",
+                "quarter": "<value for addr:quarter>",
+                "state": "<value for addr:state>",
+                "subdistrict": "<value for addr:subdistrict>",
+                "suburb": "<value for addr:suburb>",
+                "countrycode": "sg"
+            },
             "navigation": {
                 "title": "வழிசெலுத்தல்"
             },
@@ -343,9 +330,6 @@
                 },
                 "access_simple": {
                     "label": "அனுமதிக்கப்பட்ட அணுகல்"
-                },
-                "access_toilets": {
-                    "label": "நுழைவு"
                 },
                 "address": {
                     "label": "முகவரி",
@@ -466,42 +450,11 @@
                     "label": "கொள்ளளவு",
                     "placeholder": "50, 100, 200..."
                 },
-                "cardinal_direction": {
-                    "label": "திசை",
-                    "options": {
-                        "E": "கிழக்கு",
-                        "ENE": "கிழக்கு-வடகிழக்கு",
-                        "ESE": "கிழக்கு-தென்கிழக்கு",
-                        "N": "வடக்கு",
-                        "NE": "வடகிழக்கு",
-                        "NNE": "வடக்கு-வடகிழக்கு",
-                        "NNW": "வடக்கு-வடமேற்கு",
-                        "NW": "வடமேற்கு",
-                        "S": "தெற்கு",
-                        "SE": "தென்கிழக்கு",
-                        "SSE": "தெற்கு-தென்கிழக்கு",
-                        "SSW": "தெற்கு-தென்மேற்கு",
-                        "SW": "தென்மேற்கு",
-                        "W": "மேற்கு",
-                        "WNW": "மேற்கு-வடமேற்கு",
-                        "WSW": "மேற்கு-தென்மேற்கு"
-                    }
-                },
-                "clock_direction": {
-                    "label": "திசை",
-                    "options": {
-                        "anticlockwise": "எதிர் கடிகாரத் திசையில்",
-                        "clockwise": "வலம் சுற்றுகிற"
-                    }
-                },
                 "collection_times": {
                     "label": "சேகரிப்பு காலம்"
                 },
                 "construction": {
                     "label": "வகை"
-                },
-                "content": {
-                    "label": "பொருளடக்கம்"
                 },
                 "country": {
                     "label": "நாடு"
@@ -511,9 +464,6 @@
                 },
                 "craft": {
                     "label": "வகை"
-                },
-                "crop": {
-                    "label": "பயிர்"
                 },
                 "crossing": {
                     "label": "வகை"
@@ -624,9 +574,6 @@
                 },
                 "generator/type": {
                     "label": "வகை"
-                },
-                "golf_hole": {
-                    "label": "குறிப்பு"
                 },
                 "handicap": {
                     "label": "ஊனமுற்றோர்",
@@ -827,13 +774,6 @@
                     "label": "சமநிலை",
                     "placeholder": "3, 4, 5..."
                 },
-                "parallel_direction": {
-                    "label": "திசை",
-                    "options": {
-                        "backward": "பின்னோக்கி",
-                        "forward": "முன்னோக்கி"
-                    }
-                },
                 "parking": {
                     "label": "வகை",
                     "options": {
@@ -874,9 +814,6 @@
                 },
                 "railway": {
                     "label": "வகை"
-                },
-                "ref": {
-                    "label": "குறிப்பு"
                 },
                 "relation": {
                     "label": "வகை"
@@ -925,18 +862,6 @@
                 "smoking": {
                     "label": "புகைப்பிடித்தல்"
                 },
-                "source": {
-                    "label": "மூலம்"
-                },
-                "sport": {
-                    "label": "விளையாட்டு"
-                },
-                "sport_ice": {
-                    "label": "விளையாட்டு"
-                },
-                "sport_racing": {
-                    "label": "விளையாட்டு"
-                },
                 "stars": {
                     "label": "நட்சத்திரங்கள்"
                 },
@@ -983,9 +908,6 @@
                 },
                 "trees": {
                     "label": "மரங்கள்"
-                },
-                "tunnel": {
-                    "label": "சுரங்கம்"
                 },
                 "visibility": {
                     "label": "பார்க்கூடிய நிலை"
@@ -1054,9 +976,6 @@
                 },
                 "amenity/bicycle_rental": {
                     "name": "சைக்கிள் வாடகை"
-                },
-                "amenity/bus_station": {
-                    "name": "பேருந்து நிலையம் "
                 },
                 "amenity/cafe": {
                     "name": "டீக்கடை"
@@ -1172,9 +1091,6 @@
                 "entrance": {
                     "name": "நுழைவு / வெளியேறு"
                 },
-                "highway/bus_stop": {
-                    "name": "பேருந்து நிலையம்"
-                },
                 "highway/footway": {
                     "name": "நடைபாதை"
                 },
@@ -1289,12 +1205,6 @@
                 "office": {
                     "name": "அலுவலகம்"
                 },
-                "office/accountant": {
-                    "name": "கணக்காளர்"
-                },
-                "office/newspaper": {
-                    "name": "செய்தித்தாள்"
-                },
                 "place": {
                     "name": "இடம்"
                 },
@@ -1328,14 +1238,8 @@
                 "railway/monorail": {
                     "name": "மோனோ இரயில்"
                 },
-                "railway/platform": {
-                    "name": "இரயில்வே நடைமேடை"
-                },
                 "railway/rail": {
                     "name": "இரயில்"
-                },
-                "railway/station": {
-                    "name": "இரயில் நிலையம்"
                 },
                 "railway/subway": {
                     "name": "சுரங்கப்பாதை"

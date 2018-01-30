@@ -1,10 +1,12 @@
 {
     "icon": "shop",
     "fields": [
+        "name",
         "operator",
         "address",
         "building_area",
-        "opening_hours"
+        "opening_hours",
+        "payment_multi"
     ],
     "geometry": [
         "point",
@@ -13,5 +15,5 @@
     "tags": {
         "shop": "kiosk"
     },
-    "name": "News Kiosk"
+    "name": "Kiosk"
 }
