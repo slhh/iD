@@ -3,7 +3,6 @@
     "fields": [
         "name",
         "operator",
-        "agrarian",
         "address",
         "building_area",
         "opening_hours",
@@ -14,15 +13,13 @@
         "area"
     ],
     "terms": [
-        "agricultural inputs",
-        "agricultural machines",
-        "seeds",
-        "pesticides",
-        "fertilizer",
-        "agricultural tools"
+        "wholefood",
+        "vitamins",
+        "vegetarian",
+        "vegan"
     ],
     "tags": {
-        "shop": "agrarian"
+        "shop": "health_food "
     },
-    "name": "Farm Supply Shop"
+    "name": "Health Food Shop"
 }

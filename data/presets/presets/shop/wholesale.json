@@ -1,9 +1,9 @@
 {
-    "icon": "shop",
+    "icon": "warehouse",
     "fields": [
         "name",
         "operator",
-        "agrarian",
+        "wholesale",
         "address",
         "building_area",
         "opening_hours",
@@ -14,15 +14,11 @@
         "area"
     ],
     "terms": [
-        "agricultural inputs",
-        "agricultural machines",
-        "seeds",
-        "pesticides",
-        "fertilizer",
-        "agricultural tools"
+        "warehouse club",
+        "cash and carry"
     ],
     "tags": {
-        "shop": "agrarian"
+        "shop": "wholesale"
     },
-    "name": "Farm Supply Shop"
+    "name": "Wholesale Store"
 }

@@ -484,6 +484,9 @@ en:
           both: Both / All
           # direction=forward
           forward: Forward
+      dispensing:
+        # dispensing=*
+        label: Dispenses Prescriptions
       display:
         # display=*
         label: Display
@@ -1617,6 +1620,9 @@ en:
       wheelchair:
         # wheelchair=*
         label: Wheelchair Access
+      wholesale:
+        # wholesale=*
+        label: Wholesale
       width:
         # width=*
         label: Width (Meters)
@@ -2561,6 +2567,10 @@ en:
         name: Entrance/Exit
       building/farm:
         # building=farm
+        name: Farm House
+        terms: '<translate with synonyms or related terms for ''Farm House'', separated by commas>'
+      building/farm_auxiliary:
+        # building=farm_auxiliary
         name: Farm Building
         terms: '<translate with synonyms or related terms for ''Farm Building'', separated by commas>'
       building/garage:
@@ -3582,6 +3592,11 @@ en:
         name: Adult Gaming Center
         # 'terms: gambling,slot machine'
         terms: '<translate with synonyms or related terms for ''Adult Gaming Center'', separated by commas>'
+      leisure/amusement_arcade:
+        # leisure=amusement_arcade
+        name: Amusement Arcade
+        # 'terms: pay-to-play games,video games,driving simulators,pinball machines'
+        terms: '<translate with synonyms or related terms for ''Amusement Arcade'', separated by commas>'
       leisure/bird_hide:
         # leisure=bird_hide
         name: Bird Hide
@@ -4835,9 +4850,9 @@ en:
         terms: '<translate with synonyms or related terms for ''Shop'', separated by commas>'
       shop/agrarian:
         # shop=agrarian
-        name: Agriculture Shop
+        name: Farm Supply Shop
         # 'terms: agricultural inputs,agricultural machines,seeds,pesticides,fertilizer,agricultural tools'
-        terms: '<translate with synonyms or related terms for ''Agriculture Shop'', separated by commas>'
+        terms: '<translate with synonyms or related terms for ''Farm Supply Shop'', separated by commas>'
       shop/alcohol:
         # shop=alcohol
         name: Liquor Store
@@ -5111,6 +5126,11 @@ en:
         # shop=hardware
         name: Hardware Store
         terms: '<translate with synonyms or related terms for ''Hardware Store'', separated by commas>'
+      shop/health_food:
+        # 'shop=health_food '
+        name: Health Food Shop
+        # 'terms: wholefood,vitamins,vegetarian,vegan'
+        terms: '<translate with synonyms or related terms for ''Health Food Shop'', separated by commas>'
       shop/hearing_aids:
         # shop=hearing_aids
         name: Hearing Aids Store
@@ -5370,6 +5390,11 @@ en:
         name: Weapon Shop
         # 'terms: ammo,gun,knife,knives'
         terms: '<translate with synonyms or related terms for ''Weapon Shop'', separated by commas>'
+      shop/wholesale:
+        # shop=wholesale
+        name: Wholesale Store
+        # 'terms: warehouse club,cash and carry'
+        terms: '<translate with synonyms or related terms for ''Wholesale Store'', separated by commas>'
       shop/window_blind:
         # shop=window_blind
         name: Window Blind Store
